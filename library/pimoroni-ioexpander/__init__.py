@@ -1,9 +1,21 @@
+import time
+
+from smbus2 import SMBus, i2c_msg
+
+
 __version__ = '0.0.1'
 
 
 I2C_ADDR = 0x0F
 CHIP_ID = 0xE26A
 CHIP_VERSION = 1
+
+REG_CHIP_ID_L = 0xfa
+REG_CHIP_ID_H = 0xfb
+REG_VERSION = 0xfc
+REG_INT = 0xf9
+BIT_INT_TRIGD = 0
+BIT_INT_OUT_EN = 1
 
 REG_P0 = 0x40 
 REG_SP = 0x41       # Read only 
@@ -146,12 +158,13 @@ REG_EIPH1 = 0xbf    # Read only
 # alongwide the GPIO MODE for that port and pin (section 8.1)
 PIN_MODE_IO = 0b0000   # General IO mode, IE: not ADC or PWM
 PIN_MODE_QB = 0b0000   # Output, Quasi-Bidirectional mode
-PIN_MODE_PP = 0b0011   # Output, Push-Pull mode
+PIN_MODE_PP = 0b0001   # Output, Push-Pull mode
 PIN_MODE_IN = 0b0010   # Input-only (high-impedance)
 PIN_MODE_OD = 0b0011   # Output, Open-Drain mode
 PIN_MODE_PWM = 0b0101  # PWM, Output, Push-Pull mode
 PIN_MODE_ADC = 0b1010  # ADC, Input-only (high-impedance)
 MODE_NAMES = ('IO', 'PWM', 'ADC')
+GPIO_NAMES = ('QB', 'PP', 'IN', 'OD')
 
 IN = PIN_MODE_IN
 OUT = PIN_MODE_PP
@@ -165,7 +178,7 @@ LOW = 0
 class PIN():
     def __init__(self, port, pin):
         self.type = PIN_MODE_IO
-        self.mode = PIN_MODE_IO
+        self.mode = None
         self.port = port
         self.pin = pin
 
@@ -217,21 +230,30 @@ PINS = [
 
 
 class IOE():
-    def __init__(self, i2c_addr=I2C_ADDR, i2c_dev=None):
+    def __init__(self, i2c_addr=I2C_ADDR):
         self._i2c_addr = i2c_addr
-        self._i2c_dev = i2c_dev
-        if self._i2c_dev is None:
-            import smbus
-            self._i2c_dev = smbus.SMBus(1)
+        self._i2c_dev = SMBus(1)
+
+        # TODO: Why does this return 0x0000?
+        # chip_id = (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
+        # if chip_id != CHIP_ID:
+        #     raise RuntimeError("Invalid chip ID: {:04x}".format(chip_id))
 
     def i2c_read8(self, reg):
-        return self._i2c_dev.read_i2c_block_data(self._i2c_addr, reg, 1)[0]
+        msg_w = i2c_msg.write(self._i2c_addr, [reg])
+        self._i2c_dev.i2c_rdwr(msg_w)
+        msg_r = i2c_msg.read(self._i2c_addr, 1)
+        self._i2c_dev.i2c_rdwr(msg_r)
+
+        return list(msg_r)[0]
 
     def i2c_write8(self, reg, value):
-        self._i2c_dev.write_i2c_block_data(self._i2c_addr, reg, [value])
+        msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
+        self._i2c_dev.i2c_rdwr(msg_w)
 
     def set_bits(self, reg, bits):
         value = self.i2c_read8(reg)
+        time.sleep(0.001)
         self.i2c_write8(reg, value | bits)
 
     def set_bit(self, reg, bit):
@@ -239,6 +261,7 @@ class IOE():
 
     def clr_bits(self, reg, bits):
         value = self.i2c_read8(reg)
+        time.sleep(0.001)
         self.i2c_write8(reg, value & ~bits)
 
     def clr_bit(self, reg, bit):
@@ -259,6 +282,7 @@ class IOE():
             raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[mode]))
 
         io_pin.mode = mode
+        print("Setting pin {pin} to mode {mode} {name}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode]))
 
         if mode == PIN_MODE_PWM:
             self.set_bit(io_pin.reg_iopwm, io_pin.channel)
@@ -272,8 +296,8 @@ class IOE():
         pm2 = self.i2c_read8(io_pin.reg_m2)
 
         # Clear the pm1 and pm2 bits
-        pm1 &= ~(1 << io_pin.pin)
-        pm2 &= ~(1 << io_pin.pin)
+        pm1 &= 255 - (1 << io_pin.pin)
+        pm2 &= 255 - (1 << io_pin.pin)
 
         # Set the new pm1 and pm2 bits according to our gpio_mode
         pm1 |= (gpio_mode >> 1) << io_pin.pin
@@ -282,7 +306,7 @@ class IOE():
         self.i2c_write8(io_pin.reg_m1, pm1)
         self.i2c_write8(io_pin.reg_m2, pm2)
 
-    def input(self, pin):
+    def input(self, pin, adc_timeout=1):
         """Read the IO pin state.
         
         Returns a 12-bit ADC reading if the pin is in ADC mode
@@ -296,6 +320,7 @@ class IOE():
         io_pin = PINS[pin - 1]
 
         if io_pin.mode == PIN_MODE_ADC:
+            print("Reading ADC from pin {}".format(pin))
             self.clr_bits(REG_ADCCON0, 0x0f)
             self.set_bits(REG_ADCCON0, io_pin.channel)
             self.i2c_write8(REG_AINDIDS, 0)
@@ -306,17 +331,21 @@ class IOE():
             self.set_bit(REG_ADCCON0, 6)  # ADCS - Set the ADC conversion start flag
 
             # Wait for the ADCF conversion complete flag to be set
+            t_start = time.time()
             while not self.get_bit(REG_ADCCON0, 7):
-                time.sleep(0.001)
+                time.sleep(0.01)
+                if time.time() - t_start >= adc_timeout:
+                    raise RuntimeError("Timeout waiting for ADC conversion!")
 
             hi = self.i2c_read8(REG_ADCRH)
             lo = self.i2c_read8(REG_ADCRL)
             return ((hi << 4) | lo) / 4095.0 * 5.0
 
         elif io_pin.mode != PIN_MODE_PWM:
-            pv = self.i2c_read8(io_pin.reg_p)
+            print("Reading IO from pin {}".format(pin))
+            pv = self.get_bit(io_pin.reg_p, io_pin.pin)
 
-            return HIGH if pv & (1 << io_pin.pin) else LOW
+            return HIGH if pv else LOW
 
         # Fall-through for PWM mode
         return None
@@ -327,42 +356,45 @@ class IOE():
 
         io_pin = PINS[pin - 1]
 
-        if io_pin.type == PIN_MODE_PWM:
+        if io_pin.mode == PIN_MODE_PWM:
+            print("Outputting PWM to pin: {pin}".format(pin=pin))
             self.i2c_write8(io_pin.reg_pwml, value & 0xff)
             self.i2c_write8(io_pin.reg_pwmh, value >> 8)
             self.set_bit(REG_PWMCON0, 6)  # Set the "LOAD" bit of PWMCON0
                                           # Loads new period and duty registers into buffer
             while self.get_bit(REG_PWMCON0, 6):
-                pass                      # Wait for "LOAD" to complete
+                 time.sleep(0.001)         # Wait for "LOAD" to complete
 
-        elif io_pin.type != PIN_MODE_IP:
+        elif io_pin.mode != PIN_MODE_IN:
             if value == LOW:
+                print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
                 self.clr_bit(io_pin.reg_p, io_pin.pin)
             elif value == HIGH:
+                print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
                 self.set_bit(io_pin.reg_p, io_pin.pin)
 
 
 def test_cycles():
-    import time
-
     ioe = IOE()
 
-    ioe.set_mode(1, PWM)
-    ioe.set_mode(2, OUT)
-    ioe.set_mode(3, IN)
-    ioe.set_mode(14, ADC)
+    #ioe.set_mode(1, PWM)
+    #ioe.set_mode(9, OUT)
+    ioe.set_mode(4, OUT)
+    #ioe.set_mode(14, ADC)
 
-    ioe.output(1, 1000)
+    #ioe.output(1, 1000)
 
-    out_value = True
+    out_value = LOW
 
     while True:
-        a = ioe.input(3)
-        b = ioe.input(14)
-        ioe.output(2, out_value)
+        a = ioe.input(4)
+        #a = ioe.input(3)
+        #b = ioe.input(14)
+
+        ioe.output(4, out_value)
         out_value = not out_value
 
-        print("3: {a} 14: {b}".format(a=a, b=b))
+        #print("3: {a} 14: {b}".format(a=a, b=b))
 
         time.sleep(1.0)
 
