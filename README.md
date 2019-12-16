@@ -1,19 +1,19 @@
-# {{TITLE}}
+# IO Expander
 
-[![Build Status](https://travis-ci.com/pimoroni/{{LIBNAME}}-python.svg?branch=master)](https://travis-ci.com/pimoroni/{{LIBNAME}}-python)
-[![Coverage Status](https://coveralls.io/repos/github/pimoroni/{{LIBNAME}}-python/badge.svg?branch=master)](https://coveralls.io/github/pimoroni/{{LIBNAME}}-python?branch=master)
-[![PyPi Package](https://img.shields.io/pypi/v/{{LIBNAME}}.svg)](https://pypi.python.org/pypi/{{LIBNAME}})
-[![Python Versions](https://img.shields.io/pypi/pyversions/{{LIBNAME}}.svg)](https://pypi.python.org/pypi/{{LIBNAME}})
+[![Build Status](https://travis-ci.com/pimoroni/ioe-python.svg?branch=master)](https://travis-ci.com/pimoroni/ioe-python)
+[![Coverage Status](https://coveralls.io/repos/github/pimoroni/ioe-python/badge.svg?branch=master)](https://coveralls.io/github/pimoroni/ioe-python?branch=master)
+[![PyPi Package](https://img.shields.io/pypi/v/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
 
 # Installing
 
 Stable library from PyPi:
 
-* Just run `sudo pip install {{LIBNAME}}`
+* Just run `sudo pip install ioe`
 
 Latest/development library from GitHub:
 
-* `git clone https://github.com/pimoroni/{{LIBNAME}}-python`
-* `cd {{LIBNAME}}-python`
+* `git clone https://github.com/pimoroni/ioe-python`
+* `cd ioe-python`
 * `sudo ./install.sh`
 
