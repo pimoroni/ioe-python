@@ -211,28 +211,28 @@ class ADC_PIN(PIN):
         self.channel = channel
 
 
-PINS = [
-    PWM_PIN(1, 5, 5, REG_PIOCON1),
-    PWM_PIN(1, 0, 2, REG_PIOCON0),
-    PWM_PIN(1, 2, 0, REG_PIOCON0),
-    PWM_PIN(1, 4, 1, REG_PIOCON1),
-    PWM_PIN(0, 0, 3, REG_PIOCON0),
-    PWM_PIN(0, 1, 4, REG_PIOCON0),
-    ADC_PIN(1, 1, 7),
-    ADC_PIN(0, 3, 6),
-    ADC_PIN(0, 4, 5),
-    ADC_PIN(3, 0, 1),
-    ADC_PIN(0, 6, 3),
-    ADC_PIN(0, 5, 4),
-    ADC_PIN(0, 7, 2),
-    ADC_PIN(1, 7, 0)
-]
-
-
 class IOE():
     def __init__(self, i2c_addr=I2C_ADDR):
         self._i2c_addr = i2c_addr
         self._i2c_dev = SMBus(1)
+        self._debug = False
+
+        self._pins = [
+            PWM_PIN(1, 5, 5, REG_PIOCON1),
+            PWM_PIN(1, 0, 2, REG_PIOCON0),
+            PWM_PIN(1, 2, 0, REG_PIOCON0),
+            PWM_PIN(1, 4, 1, REG_PIOCON1),
+            PWM_PIN(0, 0, 3, REG_PIOCON0),
+            PWM_PIN(0, 1, 4, REG_PIOCON0),
+            ADC_PIN(1, 1, 7),
+            ADC_PIN(0, 3, 6),
+            ADC_PIN(0, 4, 5),
+            ADC_PIN(3, 0, 1),
+            ADC_PIN(0, 6, 3),
+            ADC_PIN(0, 5, 4),
+            ADC_PIN(0, 7, 2),
+            ADC_PIN(1, 7, 0)
+        ]
 
         # TODO: Why does this return 0x0000?
         # chip_id = (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
@@ -270,8 +270,14 @@ class IOE():
     def get_bit(self, reg, bit):
         return self.i2c_read8(reg) & (1 << bit)
 
+    def get_mode(self, pin):
+        return self._pins[pin - 1].mode
+
     def set_mode(self, pin, mode):
-        io_pin = PINS[pin - 1]
+        if pin < 1 or pin > len(self._pins):
+            raise ValueError("Pin should be in range 1-14.")
+ 
+        io_pin = self._pins[pin - 1]
         if io_pin.mode == mode:
             return
 
@@ -282,7 +288,8 @@ class IOE():
             raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[mode]))
 
         io_pin.mode = mode
-        print("Setting pin {pin} to mode {mode} {name}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode]))
+        if self._debug:
+            print("Setting pin {pin} to mode {mode} {name}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode]))
 
         if mode == PIN_MODE_PWM:
             self.set_bit(io_pin.reg_iopwm, io_pin.channel)
@@ -314,13 +321,14 @@ class IOE():
         Returns None if the pin is in PWM mode
         
         """
-        if pin < 1 or pin > len(PINS):
+        if pin < 1 or pin > len(self._pins):
             raise ValueError("Pin should be in range 1-14.")
 
-        io_pin = PINS[pin - 1]
+        io_pin = self._pins[pin - 1]
 
         if io_pin.mode == PIN_MODE_ADC:
-            print("Reading ADC from pin {}".format(pin))
+            if self._debug:
+                print("Reading ADC from pin {}".format(pin))
             self.clr_bits(REG_ADCCON0, 0x0f)
             self.set_bits(REG_ADCCON0, io_pin.channel)
             self.i2c_write8(REG_AINDIDS, 0)
@@ -342,7 +350,8 @@ class IOE():
             return ((hi << 4) | lo) / 4095.0 * 5.0
 
         elif io_pin.mode != PIN_MODE_PWM:
-            print("Reading IO from pin {}".format(pin))
+            if self._debug:
+                print("Reading IO from pin {}".format(pin))
             pv = self.get_bit(io_pin.reg_p, io_pin.pin)
 
             return HIGH if pv else LOW
@@ -351,13 +360,14 @@ class IOE():
         return None
     
     def output(self, pin, value):
-        if pin < 1 or pin > len(PINS):
+        if pin < 1 or pin > len(self._pins):
             raise ValueError("Pin should be in range 1-14.")
 
-        io_pin = PINS[pin - 1]
+        io_pin = self._pins[pin - 1]
 
         if io_pin.mode == PIN_MODE_PWM:
-            print("Outputting PWM to pin: {pin}".format(pin=pin))
+            if self._debug:
+                print("Outputting PWM to pin: {pin}".format(pin=pin))
             self.i2c_write8(io_pin.reg_pwml, value & 0xff)
             self.i2c_write8(io_pin.reg_pwmh, value >> 8)
             self.set_bit(REG_PWMCON0, 6)  # Set the "LOAD" bit of PWMCON0
@@ -367,10 +377,12 @@ class IOE():
 
         elif io_pin.mode != PIN_MODE_IN:
             if value == LOW:
-                print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
+                if self._debug:
+                    print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
                 self.clr_bit(io_pin.reg_p, io_pin.pin)
             elif value == HIGH:
-                print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
+                if self._debug:
+                    print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
                 self.set_bit(io_pin.reg_p, io_pin.pin)
 
 
