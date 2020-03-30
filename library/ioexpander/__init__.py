@@ -152,7 +152,11 @@ REG_PDTCNT = 0xba   # TA protected
 REG_PMEN = 0xbb 
 REG_PMD = 0xbc 
 REG_EIP1 = 0xbe     # Read only 
-REG_EIPH1 = 0xbf    # Read only 
+REG_EIPH1 = 0xbf    # Read only
+
+# Special mode registers, use a bit-addressing scheme to avoid
+# writing the *whole* port and smashing the i2c pins
+BIT_ADDRESSED_REGS = [REG_P0, REG_P1, REG_P2, REG_P3]
 
 # These values encode our desired pin function: IO, ADC, PWM
 # alongwide the GPIO MODE for that port and pin (section 8.1)
@@ -252,17 +256,27 @@ class IOE():
         self._i2c_dev.i2c_rdwr(msg_w)
 
     def set_bits(self, reg, bits):
-        value = self.i2c_read8(reg)
-        time.sleep(0.001)
-        self.i2c_write8(reg, value | bits)
+        if reg in BIT_ADDRESSED_REGS:
+            for bit in range(8):
+                if bits & (1 << bit):
+                    self.i2c_write8(reg, 0b1000 | (bit & 0b111))
+        else:
+            value = self.i2c_read8(reg)
+            time.sleep(0.001)
+            self.i2c_write8(reg, value | bits)
 
     def set_bit(self, reg, bit):
         self.set_bits(reg, (1 << bit))
 
     def clr_bits(self, reg, bits):
-        value = self.i2c_read8(reg)
-        time.sleep(0.001)
-        self.i2c_write8(reg, value & ~bits)
+        if reg in BIT_ADDRESSED_REGS:
+            for bit in range(8):
+                if bits & (1 << bit):
+                    self.i2c_write8(reg, 0b0000 | (bit & 0b111))
+        else:
+            value = self.i2c_read8(reg)
+            time.sleep(0.001)
+            self.i2c_write8(reg, value & ~bits)
 
     def clr_bit(self, reg, bit):
         self.clr_bits(reg, (1 << bit))
