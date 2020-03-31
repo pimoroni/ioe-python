@@ -42,9 +42,8 @@ def test_adc_input(smbus2):
     assert round(result, 2) == 2.66
 
 
-def test_adc_input_timeout(smbus2):
+def test_adc_input_timeout_should_raise_runtimeerror(smbus2):
     from ioexpander import IOE, PIN_MODE_ADC
-
 
     ioe = IOE()
 
@@ -74,3 +73,20 @@ def test_gpio_input(smbus2):
     # Always HIGH result
     smbus2.i2c_msg.read().__iter__.return_value = [0b11111111]
     assert ioe.input(1) == HIGH
+
+
+def test_pwm_set_mode(smbus2):
+    from ioexpander import IOE, PIN_MODE_PWM
+
+    ioe = IOE()
+
+    ioe.set_mode(1, PIN_MODE_PWM)
+
+
+def test_non_pwm_set_mode_should_raise_valueerror(smbus2):
+    from ioexpander import IOE, PIN_MODE_PWM
+
+    ioe = IOE()
+
+    with pytest.raises(ValueError):
+        ioe.set_mode(7, PIN_MODE_PWM)
