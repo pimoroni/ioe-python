@@ -205,7 +205,7 @@ class PWM_PIN(PIN):
         self.channel = channel
         self.reg_iopwm = reg_iopwm
         self.reg_pwml = [REG_PWM0L, REG_PWM1L, REG_PWM2L, REG_PWM3L, REG_PWM4L, REG_PWM5L][channel]
-        self.reg_pwmh = [REG_PWM0H, REG_PWM1H, REG_PWM2H, REG_PWM3H, REG_PWM4H, REG_PWM4H][channel]
+        self.reg_pwmh = [REG_PWM0H, REG_PWM1H, REG_PWM2H, REG_PWM3H, REG_PWM4H, REG_PWM5H][channel]
 
 
 class ADC_PIN(PIN):
@@ -283,6 +283,11 @@ class IOE():
 
     def get_bit(self, reg, bit):
         return self.i2c_read8(reg) & (1 << bit)
+
+    def set_pwm_period(self, value):
+        value &= 0xffff
+        self.i2c_write8(REG_PWMPL, value & 0xff)
+        self.i2c_write8(REG_PWMPH, value >> 8)
 
     def get_mode(self, pin):
         return self._pins[pin - 1].mode
