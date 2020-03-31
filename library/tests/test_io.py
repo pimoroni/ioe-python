@@ -89,4 +89,4 @@ def test_non_pwm_set_mode_should_raise_valueerror(smbus2):
     ioe = IOE()
 
     with pytest.raises(ValueError):
-        ioe.set_mode(7, PIN_MODE_PWM)
+        ioe.set_mode(10, PIN_MODE_PWM)

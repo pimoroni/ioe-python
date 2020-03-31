@@ -181,7 +181,8 @@ LOW = 0
 
 class PIN():
     def __init__(self, port, pin):
-        self.type = PIN_MODE_IO
+        if getattr(self, "type", None) is None:
+            self.type = [PIN_MODE_IO]
         self.mode = None
         self.port = port
         self.pin = pin
@@ -201,8 +202,8 @@ class PIN():
 class PWM_PIN(PIN):
     def __init__(self, port, pin, channel, reg_iopwm):
         PIN.__init__(self, port, pin)
-        self.type = PIN_MODE_PWM
-        self.channel = channel
+        self.type.append(PIN_MODE_PWM)
+        self.pwm_channel = channel
         self.reg_iopwm = reg_iopwm
         self.reg_pwml = [REG_PWM0L, REG_PWM1L, REG_PWM2L, REG_PWM3L, REG_PWM4L, REG_PWM5L][channel]
         self.reg_pwmh = [REG_PWM0H, REG_PWM1H, REG_PWM2H, REG_PWM3H, REG_PWM4H, REG_PWM5H][channel]
@@ -211,8 +212,14 @@ class PWM_PIN(PIN):
 class ADC_PIN(PIN):
     def __init__(self, port, pin, channel):
         PIN.__init__(self, port, pin)
-        self.type = PIN_MODE_ADC
-        self.channel = channel
+        self.type.append(PIN_MODE_ADC)
+        self.adc_channel = channel
+
+
+class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
+    def __init__(self, port, pin, adc_channel, pwm_channel, reg_iopwm):
+        ADC_PIN.__init__(self, port, pin, adc_channel)
+        PWM_PIN.__init__(self, port, pin, pwm_channel, reg_iopwm)
 
 
 class IOE():
@@ -225,15 +232,15 @@ class IOE():
             PWM_PIN(1, 5, 5, REG_PIOCON1),
             PWM_PIN(1, 0, 2, REG_PIOCON0),
             PWM_PIN(1, 2, 0, REG_PIOCON0),
-            PWM_PIN(1, 4, 1, REG_PIOCON1),
-            PWM_PIN(0, 0, 3, REG_PIOCON0),
+            PWM_PIN(1, 4, 1, REG_PIOCON0),
+            PWM_PIN(0, 0, 3, REG_PIOCON1),
             PWM_PIN(0, 1, 4, REG_PIOCON0),
-            ADC_PIN(1, 1, 7),
-            ADC_PIN(0, 3, 6),
-            ADC_PIN(0, 4, 5),
+            ADC_OR_PWM_PIN(1, 1, 7, 1, REG_PIOCON0),
+            ADC_OR_PWM_PIN(0, 3, 6, 5, REG_PIOCON0),
+            ADC_OR_PWM_PIN(0, 4, 5, 3, REG_PIOCON1),
             ADC_PIN(3, 0, 1),
             ADC_PIN(0, 6, 3),
-            ADC_PIN(0, 5, 4),
+            ADC_OR_PWM_PIN(0, 5, 4, 2, REG_PIOCON1),
             ADC_PIN(0, 7, 2),
             ADC_PIN(1, 7, 0)
         ]
@@ -303,7 +310,7 @@ class IOE():
         gpio_mode = mode & 0b11
         io_mode = mode >> 2
 
-        if io_mode != PIN_MODE_IO and mode != io_pin.type:
+        if io_mode != PIN_MODE_IO and mode not in io_pin.type:
             raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[io_mode]))
 
         io_pin.mode = mode
@@ -311,11 +318,11 @@ class IOE():
             print("Setting pin {pin} to mode {mode} {name}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode]))
 
         if mode == PIN_MODE_PWM:
-            self.set_bit(io_pin.reg_iopwm, io_pin.channel)
+            self.set_bit(io_pin.reg_iopwm, io_pin.pwm_channel)
 
         else:
-            if io_pin.type == PIN_MODE_PWM:
-                self.clr_bit(io_pin.reg_iopwm, io_pin.channel)
+            if PIN_MODE_PWM in io_pin.type:
+                self.clr_bit(io_pin.reg_iopwm, io_pin.pwm_channel)
 
         pm1 = self.i2c_read8(io_pin.reg_m1)
         pm2 = self.i2c_read8(io_pin.reg_m2)
@@ -348,9 +355,9 @@ class IOE():
             if self._debug:
                 print("Reading ADC from pin {}".format(pin))
             self.clr_bits(REG_ADCCON0, 0x0f)
-            self.set_bits(REG_ADCCON0, io_pin.channel)
+            self.set_bits(REG_ADCCON0, io_pin.adc_channel)
             self.i2c_write8(REG_AINDIDS, 0)
-            self.set_bit(REG_AINDIDS, io_pin.channel)
+            self.set_bit(REG_AINDIDS, io_pin.adc_channel)
             self.set_bit(REG_ADCCON1, 0)
 
             self.clr_bit(REG_ADCCON0, 7)  # ADCF - Clear the conversion complete flag
