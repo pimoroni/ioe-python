@@ -9,11 +9,10 @@
 
 Stable library from PyPi:
 
-* Just run `sudo pip install ioe`
+* Just run `sudo pip3 install pimoroni-ioexpander`
 
 Latest/development library from GitHub:
 
 * `git clone https://github.com/pimoroni/ioe-python`
 * `cd ioe-python`
 * `sudo ./install.sh`
-

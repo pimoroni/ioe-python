@@ -9,7 +9,7 @@
 
 Stable library from PyPi:
 
-* Just run `sudo pip install ioe`
+* Just run `sudo pip3 install pimoroni-ioexpander`
 
 Latest/development library from GitHub:
 
@@ -19,6 +19,7 @@ Latest/development library from GitHub:
 
 
 # Changelog
+
 0.0.1
 -----
 
