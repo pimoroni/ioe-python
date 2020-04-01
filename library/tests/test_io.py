@@ -37,8 +37,14 @@ def test_adc_input(smbus2):
     result = ioe.input(7)
     assert type(result) is float
 
-    # (128 << 4) | 128 / 4095.0 * 5.0
+    # (128 << 4) | 128 / 4095.0 * 3.3
     # round to 2dp to account for FLOATING POINT WEIRDNESS!
+    assert round(result, 2) == 1.75
+
+    ioe.set_adc_vref(5.0)
+
+    result = ioe.input(7)
+    # (128 << 4) | 128 / 4095.0 * 5.0
     assert round(result, 2) == 2.66
 
 
