@@ -154,6 +154,22 @@ REG_PMD = 0xbc
 REG_EIP1 = 0xbe     # Read only
 REG_EIPH1 = 0xbf    # Read only
 
+REG_USER_FLASH = 0xd0
+REG_FLASH_PAGE = 0xf0
+REG_INT = 0xf9
+MASK_INT_TRIG = 0x1
+MASK_INT_OUT = 0x2
+
+REG_VERSION = 0xfc
+REG_ADDR = 0xfd
+
+REG_CTRL = 0xfe     # 0 = Sleep, 1 = Reset, 2 = Read Flash, 3 = Write Flash, 4 = Addr Unlock
+MASK_CTRL_SLEEP = 0x1
+MASK_CTRL_RESET = 0x2
+MASK_CTRL_FREAD = 0x4
+MASK_CTRL_FWRITE = 0x8
+MASK_CTRL_ADDRWR = 0x10
+
 # Special mode registers, use a bit-addressing scheme to avoid
 # writing the *whole* port and smashing the i2c pins
 BIT_ADDRESSED_REGS = [REG_P0, REG_P1, REG_P2, REG_P3]
@@ -223,11 +239,23 @@ class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
 
 
 class IOE():
-    def __init__(self, i2c_addr=I2C_ADDR):
+    def __init__(self, i2c_addr=I2C_ADDR, interrupt_timeout=1.0, interrupt_pin=None, gpio=None):
         self._i2c_addr = i2c_addr
         self._i2c_dev = SMBus(1)
         self._debug = False
         self._vref = 3.3
+        self._timeout = interrupt_timeout
+        self._interrupt_pin = interrupt_pin
+        self._gpio = gpio
+
+        if self._interrupt_pin is not None:
+            if self._gpio is None:
+                import RPi.GPIO as GPIO
+                self._gpio = GPIO
+            self._gpio.setwarnings(False)
+            self._gpio.setmode(GPIO.BCM)
+            self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+            self.enable_interrupt_out()
 
         self._pins = [
             PWM_PIN(1, 5, 5, REG_PIOCON1),
@@ -286,6 +314,39 @@ class IOE():
 
     def get_bit(self, reg, bit):
         return self.i2c_read8(reg) & (1 << bit)
+
+    def enable_interrupt_out(self):
+        self.set_bit(REG_INT, 2)
+
+    def disable_interrupt_out(self):
+        self.clr_bit(REG_INT, 2)
+
+    def get_interrupt(self):
+        if self._interrupt_pin is not None:
+            return self._gpio.input(self._interrupt_pin) == 0
+        else:
+            return self.get_bit(REG_INT, 1)
+
+    def _wait_for_flash(self):
+        t_start = time.time()
+        while self.get_interrupt():
+            if time.time() - t_start > self._timeout:
+                raise RuntimeError("Timed out waiting for interrupt!")
+            time.sleep(0.001)
+
+        t_start = time.time()
+        while not self.get_interrupt():
+            if time.time() - t_start > self._timeout:
+                raise RuntimeError("Timed out waiting for interrupt!")
+            time.sleep(0.001)
+
+    def set_i2c_addr(self, i2c_addr):
+        self.set_bit(REG_CTRL, 4)
+        self.i2c_write8(REG_ADDR, i2c_addr)
+        self._i2c_addr = i2c_addr
+        time.sleep(0.25)  # TODO Handle addr change IOError better
+        # self._wait_for_flash()
+        self.clr_bit(REG_CTRL, 4)
 
     def set_adc_vref(self, vref):
         self._vref = vref
