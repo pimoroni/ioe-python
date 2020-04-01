@@ -227,6 +227,7 @@ class IOE():
         self._i2c_addr = i2c_addr
         self._i2c_dev = SMBus(1)
         self._debug = False
+        self._vref = 3.3
 
         self._pins = [
             PWM_PIN(1, 5, 5, REG_PIOCON1),
@@ -244,11 +245,6 @@ class IOE():
             ADC_PIN(0, 7, 2),
             ADC_PIN(1, 7, 0)
         ]
-
-        # TODO: Why does this return 0x0000?
-        # chip_id = (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
-        # if chip_id != CHIP_ID:
-        #     raise RuntimeError("Invalid chip ID: {:04x}".format(chip_id))
 
     def i2c_read8(self, reg):
         msg_w = i2c_msg.write(self._i2c_addr, [reg])
@@ -290,6 +286,15 @@ class IOE():
 
     def get_bit(self, reg, bit):
         return self.i2c_read8(reg) & (1 << bit)
+
+    def set_adc_vref(self, vref):
+        self._vref = vref
+
+    def get_adc_vref(self):
+        return self._vref
+
+    def get_chip_id(self):
+        return (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
 
     def set_pwm_period(self, value):
         value &= 0xffff
@@ -372,7 +377,7 @@ class IOE():
 
             hi = self.i2c_read8(REG_ADCRH)
             lo = self.i2c_read8(REG_ADCRL)
-            return ((hi << 4) | lo) / 4095.0 * 5.0
+            return ((hi << 4) | lo) / 4095.0 * self._vref
 
         elif io_pin.mode != PIN_MODE_PWM:
             if self._debug:
