@@ -216,6 +216,11 @@ class PIN():
 
 
 class PWM_PIN(PIN):
+    """PWM Pin.
+
+    Class to store details of a PWM-enabled pin.
+
+    """
     def __init__(self, port, pin, channel, reg_iopwm):
         PIN.__init__(self, port, pin)
         self.type.append(PIN_MODE_PWM)
@@ -226,6 +231,11 @@ class PWM_PIN(PIN):
 
 
 class ADC_PIN(PIN):
+    """ADC Pin.
+
+    Class to store details of an ADC-enabled pin.
+
+    """
     def __init__(self, port, pin, channel):
         PIN.__init__(self, port, pin)
         self.type.append(PIN_MODE_ADC)
@@ -233,6 +243,11 @@ class ADC_PIN(PIN):
 
 
 class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
+    """ADC/PWM Pin.
+
+    Class to store details of an ADC/PWM-enabled pin.
+
+    """
     def __init__(self, port, pin, adc_channel, pwm_channel, reg_iopwm):
         ADC_PIN.__init__(self, port, pin, adc_channel)
         PWM_PIN.__init__(self, port, pin, pwm_channel, reg_iopwm)
@@ -275,6 +290,7 @@ class IOE():
         ]
 
     def i2c_read8(self, reg):
+        """Read a single (8bit) register from the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg])
         self._i2c_dev.i2c_rdwr(msg_w)
         msg_r = i2c_msg.read(self._i2c_addr, 1)
@@ -283,10 +299,12 @@ class IOE():
         return list(msg_r)[0]
 
     def i2c_write8(self, reg, value):
+        """Write a single (8bit) register to the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
         self._i2c_dev.i2c_rdwr(msg_w)
 
     def set_bits(self, reg, bits):
+        """Set the specified bits (using a mask) in a register."""
         if reg in BIT_ADDRESSED_REGS:
             for bit in range(8):
                 if bits & (1 << bit):
@@ -297,9 +315,11 @@ class IOE():
             self.i2c_write8(reg, value | bits)
 
     def set_bit(self, reg, bit):
+        """Set the specified bit (nth position from right) in a register."""
         self.set_bits(reg, (1 << bit))
 
     def clr_bits(self, reg, bits):
+        """Clear the specified bits (using a mask) in a register."""
         if reg in BIT_ADDRESSED_REGS:
             for bit in range(8):
                 if bits & (1 << bit):
@@ -310,24 +330,30 @@ class IOE():
             self.i2c_write8(reg, value & ~bits)
 
     def clr_bit(self, reg, bit):
+        """Clear the specified bit (nth position from right) in a register."""
         self.clr_bits(reg, (1 << bit))
 
     def get_bit(self, reg, bit):
+        """Returns the specified bit (nth position from right) from a register."""
         return self.i2c_read8(reg) & (1 << bit)
 
     def enable_interrupt_out(self):
+        """Enable the IOE interrupts."""
         self.set_bit(REG_INT, 2)
 
     def disable_interrupt_out(self):
+        """Disable the IOE interrupt output."""
         self.clr_bit(REG_INT, 2)
 
     def get_interrupt(self):
+        """Get the IOE interrupt state."""
         if self._interrupt_pin is not None:
             return self._gpio.input(self._interrupt_pin) == 0
         else:
             return self.get_bit(REG_INT, 1)
 
     def _wait_for_flash(self):
+        """Wait for the IOE to finish writing non-volatile memory."""
         t_start = time.time()
         while self.get_interrupt():
             if time.time() - t_start > self._timeout:
@@ -341,6 +367,7 @@ class IOE():
             time.sleep(0.001)
 
     def set_i2c_addr(self, i2c_addr):
+        """Set the IOE i2c address."""
         self.set_bit(REG_CTRL, 4)
         self.i2c_write8(REG_ADDR, i2c_addr)
         self._i2c_addr = i2c_addr
@@ -349,23 +376,41 @@ class IOE():
         self.clr_bit(REG_CTRL, 4)
 
     def set_adc_vref(self, vref):
+        """Set the ADC voltage reference."""
         self._vref = vref
 
     def get_adc_vref(self):
+        """Get the ADC voltage reference."""
         return self._vref
 
     def get_chip_id(self):
+        """Get the IOE chip ID."""
         return (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
 
     def set_pwm_period(self, value):
+        """Set the PWM period.
+
+        The period is the point at which the PWM counter is reset to zero.
+
+        The PWM clock runs at FSYS with a divider of 1/1.
+
+        Also specifies the maximum value that can be set in the PWM duty cycle.
+
+        """
         value &= 0xffff
         self.i2c_write8(REG_PWMPL, value & 0xff)
         self.i2c_write8(REG_PWMPH, value >> 8)
 
     def get_mode(self, pin):
+        """Get the current mode of a pin."""
         return self._pins[pin - 1].mode
 
     def set_mode(self, pin, mode):
+        """Set a pin output mode.
+
+        :param mode: one of the supplied IN, OUT, PWM or ADC constants
+
+        """
         if pin < 1 or pin > len(self._pins):
             raise ValueError("Pin should be in range 1-14.")
 
@@ -411,6 +456,8 @@ class IOE():
         Returns True/False if the pin is in any other input mode
         Returns None if the pin is in PWM mode
 
+        :param adc_timeout: Timeout (in seconds) for an ADC read (default 1.0)
+
         """
         if pin < 1 or pin > len(self._pins):
             raise ValueError("Pin should be in range 1-14.")
@@ -451,6 +498,11 @@ class IOE():
         return None
 
     def output(self, pin, value):
+        """Write an IO pin state or PWM duty cycle.
+
+        :param value: Either True/False for OUT, or a number between 0 and PWM period for PWM.
+
+        """
         if pin < 1 or pin > len(self._pins):
             raise ValueError("Pin should be in range 1-14.")
 
