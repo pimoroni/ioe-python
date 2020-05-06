@@ -6,6 +6,9 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
   - [Pins](#pins)
   - [Functions](#functions)
     - [General-purpose IO](#general-purpose-io)
+      - [High-impedance input](#high-impedance-input)
+      - [Input with pull-up](#input-with-pull-up)
+      - [Output](#output)
     - [Analog Inputs (ADC)](#analog-inputs-adc)
     - [Pulse Width Modulation Outputs (PWM)](#pulse-width-modulation-outputs-pwm)
 
@@ -42,11 +45,13 @@ ioe = ioexpander.IOE()
 
 All pins support general-purpose IO.
 
-For input pins you will usually use `ioexpander.IN` which sets pins to Quasi-Bidirectional mode.
 
-You can also use `ioexpander.PIN_MODE_IN` for input-only high-impedance mode.
 
-To set a pin as an input:
+#### High-impedance input
+
+For input pins you will usually use `ioexpander.IN` which sets pins to input-only, high-impedance mode. This mode does not support pull-ups on the pins, and is useful for reading logic levels which are asserted to a high/low value.
+
+To set a pin as a high-impedance input:
 
 ```python
 ioe.set_mode(1, ioexpander.IN)
@@ -57,6 +62,26 @@ And read its value:
 ```python
 value = ioe.input(1)
 ```
+
+#### Input with pull-up
+
+For reading buttons, or other inputs which sink the connected pin to ground (open drain IO pins for example) you should use the `ioexpander.IN_PU` mode.
+
+In this mode the pin is set to a quasi-bidirectional input, and a pull-up resistor is asserted pulling the logic level weakly HIGH.
+
+```python
+ioe.set_mode(1, ioexpander.IN_PU)
+```
+
+Wire a button between ground, and the IO pin and read its value:
+
+```python
+value = ioe.input(1)
+```
+
+A value of 0 (`LOW`) corresponds to a pushed button.
+
+#### Output
 
 For output pins you may choose a variety of output modes:
 
@@ -101,6 +126,10 @@ For accurate analog readings, the vref value (which defaults to 3.3) should matc
 ### Pulse Width Modulation Outputs (PWM)
 
 Pins 1, 2, 4, 5, and 6 support PWM output as marked. Additionally pins 7, 8, 9 and 12 (marked as ADC on the IO expander) can be configured as PWM outputs.
+
+```python
+io.set_mode(1, ioexpander.PWM)
+```
 
 PWM, by default, uses the 24MHz FSYS clock and has  16bit period and duty-cycle registers.
 
