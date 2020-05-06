@@ -113,3 +113,12 @@ def test_non_pwm_set_mode_should_raise_valueerror(smbus2):
 
     with pytest.raises(ValueError):
         ioe.set_mode(10, PIN_MODE_PWM)
+
+
+def test_set_pwm_control(smbus2):
+    from ioexpander import IOE, PIN_MODE_PWM
+
+    ioe = IOE()
+
+    ioe.set_mode(1, PIN_MODE_PWM)
+    ioe.set_pwm_control(divider=8)
