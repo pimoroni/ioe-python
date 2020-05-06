@@ -82,6 +82,56 @@ Note: when using open-drain mode (`PIN_MODE_OD`), writing a `1` will pull the pi
 
 Pins 7, 8, 9 10, 11, 12, 13, and 14 support analog input.
 
+IO Expander's `input` method will automatically give you a voltage for pins configured in ADC mode:
+
+```python
+ioe.set_mode(7, ioexpander.ADC)
+voltage = ioe.input(7)
+```
+
+This is scaled against the ADC vref value, which can be read/set with:
+
+```python
+ioe.set_adc_vref(5)
+vref = ioe.get_adc_vref()
+```
+
+For accurate analog readings, the vref value (which defaults to 3.3) should match the voltage at which the breakout is being powered. In most cases this will be either 3.3v or 5v.
+
 ### Pulse Width Modulation Outputs (PWM)
 
 Pins 1, 2, 4, 5, and 6 support PWM output as marked. Additionally pins 7, 8, 9 and 12 (marked as ADC on the IO expander) can be configured as PWM outputs.
+
+PWM, by default, uses the 24MHz FSYS clock and has  16bit period and duty-cycle registers.
+
+There are 8 dividers available to slow the clock input into the PWM generator:
+
+* 1/1
+* 1/2
+* 1/4
+* 1/8
+* 1/16
+* 1/32
+* 1/64
+* 1/128
+
+These can be set with `set_pwm_control`:
+
+```python
+ioe.set_pwm_control(divider=8)
+```
+
+In order to dial in the frequency you need, you must consider the 24MHz clock, the available divider options and the maximum value of the period register.
+
+For example, for a 50Hz servo frequency you would use a 1/8 divider, and a period of 60,000:
+
+```
+24,000,000 / 8 / 60,000 = 50
+````
+
+``python
+ioe.set_pwm_control(divider=8)
+ioe.set_pwm_period(60000)
+```
+
+Then you can use duty-cycle values from 3000 to 6000 (1ms to 2ms) to create a servo control pulse.
