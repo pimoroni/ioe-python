@@ -176,17 +176,21 @@ BIT_ADDRESSED_REGS = [REG_P0, REG_P1, REG_P2, REG_P3]
 
 # These values encode our desired pin function: IO, ADC, PWM
 # alongwide the GPIO MODE for that port and pin (section 8.1)
-PIN_MODE_IO = 0b0000   # General IO mode, IE: not ADC or PWM
-PIN_MODE_QB = 0b0000   # Output, Quasi-Bidirectional mode
-PIN_MODE_PP = 0b0001   # Output, Push-Pull mode
-PIN_MODE_IN = 0b0010   # Input-only (high-impedance)
-PIN_MODE_OD = 0b0011   # Output, Open-Drain mode
-PIN_MODE_PWM = 0b0101  # PWM, Output, Push-Pull mode
-PIN_MODE_ADC = 0b1010  # ADC, Input-only (high-impedance)
+# the 5th bit additionally encodes the default output state
+PIN_MODE_IO = 0b00000   # General IO mode, IE: not ADC or PWM
+PIN_MODE_QB = 0b00000   # Output, Quasi-Bidirectional mode
+PIN_MODE_PP = 0b00001   # Output, Push-Pull mode
+PIN_MODE_IN = 0b00010   # Input-only (high-impedance)
+PIN_MODE_PU = 0b10000   # Input (with pull-up)
+PIN_MODE_OD = 0b00011   # Output, Open-Drain mode
+PIN_MODE_PWM = 0b00101  # PWM, Output, Push-Pull mode
+PIN_MODE_ADC = 0b01010  # ADC, Input-only (high-impedance)
 MODE_NAMES = ('IO', 'PWM', 'ADC')
 GPIO_NAMES = ('QB', 'PP', 'IN', 'OD')
 
 IN = PIN_MODE_IN
+IN_PULL_UP = PIN_MODE_PU
+IN_PU = PIN_MODE_PU
 OUT = PIN_MODE_PP
 PWM = PIN_MODE_PWM
 ADC = PIN_MODE_ADC
@@ -449,6 +453,9 @@ class IOE():
         self.i2c_write8(io_pin.reg_m1, pm1)
         self.i2c_write8(io_pin.reg_m2, pm2)
 
+        # 5th bit of mode encodes default output pin state
+        self.i2c_write8(io_pin.reg_p, ((mode & 0b10000) >> 1) | io_pin.pin)
+
     def input(self, pin, adc_timeout=1):
         """Read the IO pin state.
 
@@ -518,12 +525,14 @@ class IOE():
             while self.get_bit(REG_PWMCON0, 6):
                 time.sleep(0.001)           # Wait for "LOAD" to complete
 
-        elif io_pin.mode != PIN_MODE_IN:
+        else:
             if value == LOW:
                 if self._debug:
                     print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
-                self.clr_bit(io_pin.reg_p, io_pin.pin)
+                # self.clr_bit(io_pin.reg_p, io_pin.pin)
+                self.i2c_write8(io_pin.reg_p, io_pin.pin)
             elif value == HIGH:
                 if self._debug:
                     print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
-                self.set_bit(io_pin.reg_p, io_pin.pin)
+                # self.set_bit(io_pin.reg_p, io_pin.pin)
+                self.i2c_write8(io_pin.reg_p, 0b1000 | io_pin.pin)
