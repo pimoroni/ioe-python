@@ -81,6 +81,23 @@ def test_gpio_input(smbus2):
     assert ioe.input(1) == HIGH
 
 
+def test_gpio_input_pull_up(smbus2):
+    from ioexpander import IOE, PIN_MODE_PU, HIGH, LOW
+
+    ioe = IOE()
+
+    ioe.set_mode(1, PIN_MODE_PU)
+    assert ioe.get_mode(1) == PIN_MODE_PU
+
+    # Always LOW result
+    smbus2.i2c_msg.read().__iter__.return_value = [0b00000000]
+    assert ioe.input(1) == LOW
+
+    # Always HIGH result
+    smbus2.i2c_msg.read().__iter__.return_value = [0b11111111]
+    assert ioe.input(1) == HIGH
+
+
 def test_pwm_set_mode(smbus2):
     from ioexpander import IOE, PIN_MODE_PWM
 

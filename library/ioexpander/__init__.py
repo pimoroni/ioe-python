@@ -187,6 +187,7 @@ PIN_MODE_PWM = 0b00101  # PWM, Output, Push-Pull mode
 PIN_MODE_ADC = 0b01010  # ADC, Input-only (high-impedance)
 MODE_NAMES = ('IO', 'PWM', 'ADC')
 GPIO_NAMES = ('QB', 'PP', 'IN', 'OD')
+STATE_NAMES = ('LOW', 'HIGH')
 
 IN = PIN_MODE_IN
 IN_PULL_UP = PIN_MODE_PU
@@ -423,14 +424,15 @@ class IOE():
             return
 
         gpio_mode = mode & 0b11
-        io_mode = mode >> 2
+        io_mode = (mode >> 2) & 0b11
+        initial_state = mode >> 4
 
         if io_mode != PIN_MODE_IO and mode not in io_pin.type:
             raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[io_mode]))
 
         io_pin.mode = mode
         if self._debug:
-            print("Setting pin {pin} to mode {mode} {name}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode]))
+            print("Setting pin {pin} to mode {mode} {name}, state: {state}".format(pin=pin, mode=MODE_NAMES[io_mode], name=GPIO_NAMES[gpio_mode], state=STATE_NAMES[initial_state]))
 
         if mode == PIN_MODE_PWM:
             self.set_bit(io_pin.reg_iopwm, io_pin.pwm_channel)
@@ -454,7 +456,7 @@ class IOE():
         self.i2c_write8(io_pin.reg_m2, pm2)
 
         # 5th bit of mode encodes default output pin state
-        self.i2c_write8(io_pin.reg_p, ((mode & 0b10000) >> 1) | io_pin.pin)
+        self.i2c_write8(io_pin.reg_p, (initial_state << 3) | io_pin.pin)
 
     def input(self, pin, adc_timeout=1):
         """Read the IO pin state.
