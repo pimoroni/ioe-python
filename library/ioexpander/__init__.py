@@ -392,6 +392,41 @@ class IOE():
         """Get the IOE chip ID."""
         return (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
 
+    def _pwm_load(self):
+        # Load new period and duty registers into buffer
+        self.set_bit(REG_PWMCON0, 6)    # Set the "LOAD" bit of PWMCON0
+        while self.get_bit(REG_PWMCON0, 6):
+            time.sleep(0.001)           # Wait for "LOAD" to complete
+
+    def set_pwm_control(self, divider):
+        """Set PWM settings.
+
+        PWM is driven by the 24MHz FSYS clock by default.
+
+        :param divider: Clock divider, one of 1, 2, 4, 8, 16, 32, 64 or 128
+
+        """
+        try:
+            pwmdiv2 = {
+                1: 0b000,
+                2: 0b001,
+                4: 0b010,
+                8: 0b011,
+                16: 0b100,
+                32: 0b101,
+                64: 0b110,
+                128: 0b111}[divider]
+        except KeyError:
+            raise ValueError("A clock divider of {}".format(divider))
+
+        # TODO: This currently sets GP, PWMTYP and FBINEN to 0
+        # It might be desirable to make these available to the user
+        # GP - Group mode enable (changes first three pairs of pAM to PWM01H and PWM01L)
+        # PWMTYP - PWM type select: 0 edge-aligned, 1 center-aligned
+        # FBINEN - Fault-break input enable
+
+        self.i2c_write8(REG_PWMCON1, pwmdiv2)
+
     def set_pwm_period(self, value):
         """Set the PWM period.
 
@@ -405,6 +440,8 @@ class IOE():
         value &= 0xffff
         self.i2c_write8(REG_PWMPL, value & 0xff)
         self.i2c_write8(REG_PWMPH, value >> 8)
+
+        self._pwm_load()
 
     def get_mode(self, pin):
         """Get the current mode of a pin."""
@@ -522,19 +559,14 @@ class IOE():
                 print("Outputting PWM to pin: {pin}".format(pin=pin))
             self.i2c_write8(io_pin.reg_pwml, value & 0xff)
             self.i2c_write8(io_pin.reg_pwmh, value >> 8)
-            # Load new period and duty registers into buffer
-            self.set_bit(REG_PWMCON0, 6)    # Set the "LOAD" bit of PWMCON0
-            while self.get_bit(REG_PWMCON0, 6):
-                time.sleep(0.001)           # Wait for "LOAD" to complete
+            self._pwm_load()
 
         else:
             if value == LOW:
                 if self._debug:
                     print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
-                # self.clr_bit(io_pin.reg_p, io_pin.pin)
-                self.i2c_write8(io_pin.reg_p, io_pin.pin)
+                self.clr_bit(io_pin.reg_p, io_pin.pin)
             elif value == HIGH:
                 if self._debug:
                     print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
-                # self.set_bit(io_pin.reg_p, io_pin.pin)
-                self.i2c_write8(io_pin.reg_p, 0b1000 | io_pin.pin)
+                self.set_bit(io_pin.reg_p, io_pin.pin)
