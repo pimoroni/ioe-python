@@ -13,9 +13,6 @@ CHIP_VERSION = 1
 REG_CHIP_ID_L = 0xfa
 REG_CHIP_ID_H = 0xfb
 REG_VERSION = 0xfc
-REG_INT = 0xf9
-BIT_INT_TRIGD = 0
-BIT_INT_OUT_EN = 1
 
 REG_P0 = 0x40       # protect_bits 2 # Bit addressing
 REG_SP = 0x41       # Read only
@@ -156,9 +153,18 @@ REG_EIPH1 = 0xbf    # Read only
 
 REG_USER_FLASH = 0xd0
 REG_FLASH_PAGE = 0xf0
+
+
 REG_INT = 0xf9
 MASK_INT_TRIG = 0x1
 MASK_INT_OUT = 0x2
+BIT_INT_TRIGD = 0
+BIT_INT_OUT_EN = 1
+
+REG_INT_MASK_P0 = 0x00
+REG_INT_MASK_P1 = 0x01
+REG_INT_MASK_P3 = 0x02
+
 
 REG_VERSION = 0xfc
 REG_ADDR = 0xfd
@@ -218,6 +224,7 @@ class PIN():
 
         # The Px input register
         self.reg_p = [REG_P0, REG_P1, -1, REG_P3][port]
+        self.reg_int_mask_p = [REG_INT_MASK_P0, REG_INT_MASK_P1, -1, REG_INT_MASK_P3][port]
 
 
 class PWM_PIN(PIN):
@@ -344,18 +351,43 @@ class IOE():
 
     def enable_interrupt_out(self):
         """Enable the IOE interrupts."""
-        self.set_bit(REG_INT, 2)
+        self.set_bit(REG_INT, BIT_INT_OUT_EN)
 
     def disable_interrupt_out(self):
         """Disable the IOE interrupt output."""
-        self.clr_bit(REG_INT, 2)
+        self.clr_bit(REG_INT, BIT_INT_OUT_EN)
 
     def get_interrupt(self):
         """Get the IOE interrupt state."""
         if self._interrupt_pin is not None:
             return self._gpio.input(self._interrupt_pin) == 0
         else:
-            return self.get_bit(REG_INT, 1)
+            return self.get_bit(REG_INT, BIT_INT_TRIGD)
+
+    def clear_interrupt(self):
+        """Clear the interrupt flag."""
+        self.clr_bit(REG_INT, BIT_INT_TRIGD)
+
+    def set_pin_interrupt(self, pin, enabled):
+        """Enable/disable the input interrupt on a specific pin.
+
+        :param pin: Pin from 1-14
+        :param enabled: True/False for enabled/disabled
+
+        """
+        if pin < 1 or pin > len(self._pins):
+            raise ValueError("Pin should be in range 1-14.")
+
+        io_pin = self._pins[pin - 1]
+
+        if enabled:
+            self.set_bit(io_pin.reg_int_mask_p, io_pin.pin)
+        else:
+            self.clr_bit(io_pin.reg_int_mask_p, io_pin.pin)
+
+    def on_interrupt(self, callback):
+        if self._interrupt_pin is not None:
+            self._gpio.add_event_detect(self._interrupt_pin, self._gpio.FALLING, callback=callback, bouncetime=1)
 
     def _wait_for_flash(self):
         """Wait for the IOE to finish writing non-volatile memory."""
@@ -533,15 +565,12 @@ class IOE():
             lo = self.i2c_read8(REG_ADCRL)
             return ((hi << 4) | lo) / 4095.0 * self._vref
 
-        elif io_pin.mode != PIN_MODE_PWM:
+        else:
             if self._debug:
                 print("Reading IO from pin {}".format(pin))
             pv = self.get_bit(io_pin.reg_p, io_pin.pin)
 
             return HIGH if pv else LOW
-
-        # Fall-through for PWM mode
-        return None
 
     def output(self, pin, value):
         """Write an IO pin state or PWM duty cycle.
