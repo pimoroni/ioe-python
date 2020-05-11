@@ -128,7 +128,7 @@ For accurate analog readings, the vref value (which defaults to 3.3) should matc
 Pins 1, 2, 4, 5, and 6 support PWM output as marked. Additionally pins 7, 8, 9 and 12 (marked as ADC on the IO expander) can be configured as PWM outputs.
 
 ```python
-io.set_mode(1, ioexpander.PWM)
+ioe.set_mode(1, ioexpander.PWM)
 ```
 
 PWM, by default, uses the 24MHz FSYS clock and has  16bit period and duty-cycle registers.
