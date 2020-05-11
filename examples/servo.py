@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import time
 import ioexpander as io
 import math
@@ -14,6 +15,8 @@ Press Ctrl+C to exit.
 PIN_PWM = 1
 
 # Settings to produce a 50Hz output from the 24MHz clock.
+# 24,000,000 Hz / 8 = 3,000,000 Hz
+# 3,000,000 Hz / 60,000 Period = 50 Hz
 DIVIDER = 8
 PERIOD = 60000
 
@@ -32,7 +35,8 @@ while True:
 
     duty_per_microsecond = PERIOD / (20 * 1000)  # Default is 3 LSB per microsecond
 
-    duty_cycle = servo_us * duty_per_microsecond
+    duty_cycle = int(round(servo_us * duty_per_microsecond))
+    print("Pulse {:.2f}us, Duty Cycle: {}".format(servo_us, duty_cycle))
 
     ioe.output(PIN_PWM, duty_cycle)
 
