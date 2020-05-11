@@ -43,9 +43,7 @@ ioe = ioexpander.IOE()
 
 ### General-purpose IO
 
-All pins support general-purpose IO.
-
-
+All pins support general-purpose IO and can be configured either as a high-impedance input, quasi-bidirectional input with pull-up, open-drain output or push-pull output. These modes are applicable to different use-cases and we mention some basic examples below.
 
 #### High-impedance input
 
@@ -83,22 +81,39 @@ A value of 0 (`LOW`) corresponds to a pushed button.
 
 #### Output
 
-For output pins you may choose a variety of output modes:
+For output pins you may choose one of the following output modes:
 
 * `ioexpander.PIN_MODE_PP` - Output, Push-Pull mode. Drives a pin either HIGH or LOW.
 * `ioexpander.PIN_MODE_OD` - Output, Open-Drain mode. Drives low, or leaves the pin floating
 
-To set a pin as an output:
+Push-pull mode is non-inverting, and useful for controlling a connected device (such as a shift register or motor driver), or switching an NPN transistor.
+
+Open-drain mode effectively inverts the signal, since outputting a HIGH will connect the pin to Ground. Open-drain outputs are used in multi-drop protocols like i2c, but can also be used for devices or digital logic that requires an active low input.
+
+To set a pin as a push-pull output:
 
 ```python
-ioe.set_mode(1, ioexpander.OUT)
+ioe.set_mode(1, ioexpander.PIN_MODE_PP)
 ```
 
 And set its value:
 
 ```python
+ioe.output(1, 0)  # Low (Floating in OD)
 ioe.output(1, 1)  # High (Low in OD)
-ioe.output(1, 1)  # Low (Floating in OD)
+```
+
+Or an open-drain output:
+
+```python
+ioe.set_mode(1, ioexpander.PIN_MODE_OD)
+```
+
+And set its value:
+
+```python
+ioe.output(1, 0)  # High (High-impedance floating)
+ioe.output(1, 1)  # Low (Pulls to ground)
 ```
 
 Note: when using open-drain mode (`PIN_MODE_OD`), writing a `1` will pull the pin low and writing a `0` will leave the pin floating.
