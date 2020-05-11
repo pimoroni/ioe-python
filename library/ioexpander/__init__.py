@@ -6,7 +6,7 @@ from smbus2 import SMBus, i2c_msg
 __version__ = '0.0.1'
 
 
-I2C_ADDR = 0x0F
+I2C_ADDR = 0x18
 CHIP_ID = 0xE26A
 CHIP_VERSION = 1
 
