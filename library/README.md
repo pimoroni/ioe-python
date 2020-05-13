@@ -7,16 +7,21 @@
 
 # Installing
 
-Stable library from PyPi:
-
-* Just run `sudo pip3 install pimoroni-ioexpander`
-
-Latest/development library from GitHub:
+Stable library and dependencies from GitHub:
 
 * `git clone https://github.com/pimoroni/ioe-python`
 * `cd ioe-python`
 * `sudo ./install.sh`
 
+Latest/development library and dependencies from GitHub:
+
+* `git clone https://github.com/pimoroni/ioe-python`
+* `cd ioe-python`
+* `sudo ./install.sh --unstable`
+
+Stable (library only) from PyPi:
+
+* Just run `sudo pip3 install pimoroni-ioexpander`
 
 # Changelog
 
