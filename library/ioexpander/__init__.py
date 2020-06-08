@@ -14,6 +14,41 @@ REG_CHIP_ID_L = 0xfa
 REG_CHIP_ID_H = 0xfb
 REG_VERSION = 0xfc
 
+# Rotary encoder
+REG_ENC_EN = 0x04
+BIT_ENC_EN_1 = 0
+BIT_ENC_MICROSTEP_1 = 1
+BIT_ENC_EN_2 = 2
+BIT_ENC_MICROSTEP_2 = 3
+BIT_ENC_EN_3 = 4
+BIT_ENC_MICROSTEP_3 = 5
+BIT_ENC_EN_4 = 6
+BIT_ENC_MICROSTEP_4 = 7
+
+REG_ENC_1_CFG = 0x05
+REG_ENC_1_COUNT = 0x06
+REG_ENC_2_CFG = 0x07
+REG_ENC_2_COUNT = 0x08
+REG_ENC_3_CFG = 0x09
+REG_ENC_3_COUNT = 0x0A
+REG_ENC_4_CFG = 0x0B
+REG_ENC_4_COUNT = 0x0C
+
+# Cap touch
+REG_CAPTOUCH_EN = 0x0D
+REG_CAPTOUCH_CFG = 0x0E
+REG_CAPTOUCH_0 = 0x0F  # First of 8 bytes from 15-22
+
+# Switch counters
+REG_SWITCH_EN_P0 = 0x17
+REG_SWITCH_EN_P1 = 0x18
+REG_SWITCH_P00 = 0x19  # First of 8 bytes from 25-40
+REG_SWITCH_P10 = 0x21  # First of 8 bytes from 33-49
+
+REG_USER_FLASH = 0xD0
+REG_FLASH_PAGE = 0xF0
+REG_DEBUG = 0xF8
+
 REG_P0 = 0x40       # protect_bits 2 # Bit addressing
 REG_SP = 0x41       # Read only
 REG_DPL = 0x42      # Read only
@@ -160,6 +195,7 @@ MASK_INT_TRIG = 0x1
 MASK_INT_OUT = 0x2
 BIT_INT_TRIGD = 0
 BIT_INT_OUT_EN = 1
+BIT_INT_PIN_SWAP = 2  # 0 = P1.3, 1 = P0.0
 
 REG_INT_MASK_P0 = 0x00
 REG_INT_MASK_P1 = 0x01
@@ -349,9 +385,13 @@ class IOE():
         """Returns the specified bit (nth position from right) from a register."""
         return self.i2c_read8(reg) & (1 << bit)
 
-    def enable_interrupt_out(self):
+    def enable_interrupt_out(self, pin_swap=False):
         """Enable the IOE interrupts."""
         self.set_bit(REG_INT, BIT_INT_OUT_EN)
+        if pin_swap:
+            self.set_bit(REG_INT, BIT_INT_PIN_SWAP)
+        else:
+            self.clr_bit(REG_INT, BIT_INT_PIN_SWAP)
 
     def disable_interrupt_out(self):
         """Disable the IOE interrupt output."""
