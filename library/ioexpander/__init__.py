@@ -426,9 +426,12 @@ class IOE():
 
     def _pwm_load(self):
         # Load new period and duty registers into buffer
+        t_start = time.time()
         self.set_bit(REG_PWMCON0, 6)    # Set the "LOAD" bit of PWMCON0
         while self.get_bit(REG_PWMCON0, 6):
             time.sleep(0.001)           # Wait for "LOAD" to complete
+            if time.time() - t_start >= self._timeout:
+                raise RuntimeError("Timed out waiting for PWM load!")
 
     def set_pwm_control(self, divider):
         """Set PWM settings.
