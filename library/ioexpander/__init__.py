@@ -482,7 +482,7 @@ class IOE():
         """Get the current mode of a pin."""
         return self._pins[pin - 1].mode
 
-    def set_mode(self, pin, mode):
+    def set_mode(self, pin, mode, invert=False):
         """Set a pin output mode.
 
         :param mode: one of the supplied IN, OUT, PWM or ADC constants
@@ -508,6 +508,11 @@ class IOE():
 
         if mode == PIN_MODE_PWM:
             self.set_bit(io_pin.reg_iopwm, io_pin.pwm_channel)
+            if invert:
+                self.set_bit(REG_PNP, io_pin.pwm_channel)
+            else:
+                self.clr_bit(REG_PNP, io_pin.pwm_channel)
+            self.set_bit(REG_PWMCON0, 7)  # Set PWMRUN bit
 
         else:
             if PIN_MODE_PWM in io_pin.type:
