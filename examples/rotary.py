@@ -43,12 +43,12 @@ while True:
     if ioe.get_interrupt():
         count = ioe.read_rotary_encoder(1)
         ioe.clear_interrupt()
-    else:
-        h = (count % 360) / 360.0
-        r, g, b = [int(c * PERIOD * BRIGHTNESS) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
-        ioe.output(PIN_RED, r)
-        ioe.output(PIN_GREEN, g)
-        ioe.output(PIN_BLUE, b)
+
+    h = (count % 360) / 360.0
+    r, g, b = [int(c * PERIOD * BRIGHTNESS) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
+    ioe.output(PIN_RED, r)
+    ioe.output(PIN_GREEN, g)
+    ioe.output(PIN_BLUE, b)
 
     print(count, r, g, b)
 
