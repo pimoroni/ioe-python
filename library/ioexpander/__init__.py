@@ -312,6 +312,8 @@ class IOE():
         self._timeout = interrupt_timeout
         self._interrupt_pin = interrupt_pin
         self._gpio = gpio
+        self._encoder_offset = [0, 0, 0, 0]
+        self._encoder_last = [0, 0, 0, 0]
 
         if self._interrupt_pin is not None:
             if self._gpio is None:
@@ -368,8 +370,22 @@ class IOE():
 
     def read_rotary_encoder(self, channel):
         """Read the step count from a rotary encoder."""
-        reg = [REG_ENC_1_COUNT, REG_ENC_2_COUNT, REG_ENC_3_COUNT, REG_ENC_4_COUNT][channel - 1]
-        return self.i2c_read8(reg)
+        channel -= 1
+        last = self._encoder_last[channel]
+        reg = [REG_ENC_1_COUNT, REG_ENC_2_COUNT, REG_ENC_3_COUNT, REG_ENC_4_COUNT][channel]
+        value = self.i2c_read8(reg)
+
+        if value & 0b10000000:
+            value -= 256
+
+        if last > 64 and value < -64:
+            self._encoder_offset[channel] += 256
+        if last < -64 and value > 64:
+            self._encoder_offset[channel] -= 256
+
+        self._encoder_last[channel] = value
+
+        return self._encoder_offset[channel] + value
 
     def set_bits(self, reg, bits):
         """Set the specified bits (using a mask) in a register."""
