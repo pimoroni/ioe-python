@@ -260,6 +260,8 @@ class PIN():
 
         # The Px input register
         self.reg_p = [REG_P0, REG_P1, -1, REG_P3][port]
+        # The PxS Schmitt trigger register
+        self.reg_ps = [REG_P0S, REG_P1S, -1, REG_P3S][port]
         self.reg_int_mask_p = [REG_INT_MASK_P0, REG_INT_MASK_P1, -1, REG_INT_MASK_P3][port]
 
 
@@ -351,6 +353,24 @@ class IOE():
         msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
         self._i2c_dev.i2c_rdwr(msg_w)
 
+    def setup_rotary_encoder(self, channel, pin_a, pin_b, pin_c=None, count_microsteps=False):
+        """Set up a rotary encoder."""
+        channel -= 1
+        self.set_mode(pin_a, PIN_MODE_PU, schmitt_trigger=True)
+        self.set_mode(pin_b, PIN_MODE_PU, schmitt_trigger=True)
+        if pin_c is not None:
+            self.set_mode(pin_c, PIN_MODE_OD)
+            self.output(pin_c, 0)
+
+        self.i2c_write8([REG_ENC_1_CFG, REG_ENC_2_CFG, REG_ENC_3_CFG, REG_ENC_4_CFG][channel], pin_a | (pin_b << 4))
+        self.change_bit(REG_ENC_EN, channel * 2 + 1, count_microsteps)
+        self.set_bit(REG_ENC_EN, channel * 2)
+
+    def read_rotary_encoder(self, channel):
+        """Read the step count from a rotary encoder."""
+        reg = [REG_ENC_1_COUNT, REG_ENC_2_COUNT, REG_ENC_3_COUNT, REG_ENC_4_COUNT][channel - 1]
+        return self.i2c_read8(reg)
+
     def set_bits(self, reg, bits):
         """Set the specified bits (using a mask) in a register."""
         if reg in BIT_ADDRESSED_REGS:
@@ -385,13 +405,17 @@ class IOE():
         """Returns the specified bit (nth position from right) from a register."""
         return self.i2c_read8(reg) & (1 << bit)
 
+    def change_bit(self, reg, bit, state):
+        """Toggle one register bit on/off."""
+        if state:
+            self.set_bit(reg, bit)
+        else:
+            self.clr_bit(reg, bit)
+
     def enable_interrupt_out(self, pin_swap=False):
         """Enable the IOE interrupts."""
         self.set_bit(REG_INT, BIT_INT_OUT_EN)
-        if pin_swap:
-            self.set_bit(REG_INT, BIT_INT_PIN_SWAP)
-        else:
-            self.clr_bit(REG_INT, BIT_INT_PIN_SWAP)
+        self.change_bit(REG_INT, BIT_INT_PIN_SWAP, pin_swap)
 
     def disable_interrupt_out(self):
         """Disable the IOE interrupt output."""
@@ -420,10 +444,7 @@ class IOE():
 
         io_pin = self._pins[pin - 1]
 
-        if enabled:
-            self.set_bit(io_pin.reg_int_mask_p, io_pin.pin)
-        else:
-            self.clr_bit(io_pin.reg_int_mask_p, io_pin.pin)
+        self.change_bit(io_pin.reg_int_mask_p, io_pin.pin, enabled)
 
     def on_interrupt(self, callback):
         if self._interrupt_pin is not None:
@@ -522,7 +543,7 @@ class IOE():
         """Get the current mode of a pin."""
         return self._pins[pin - 1].mode
 
-    def set_mode(self, pin, mode, invert=False):
+    def set_mode(self, pin, mode, schmitt_trigger=False, invert=False):
         """Set a pin output mode.
 
         :param mode: one of the supplied IN, OUT, PWM or ADC constants
@@ -548,10 +569,7 @@ class IOE():
 
         if mode == PIN_MODE_PWM:
             self.set_bit(io_pin.reg_iopwm, io_pin.pwm_channel)
-            if invert:
-                self.set_bit(REG_PNP, io_pin.pwm_channel)
-            else:
-                self.clr_bit(REG_PNP, io_pin.pwm_channel)
+            self.change_bit(REG_PNP, io_pin.pwm_channel, invert)
             self.set_bit(REG_PWMCON0, 7)  # Set PWMRUN bit
 
         else:
@@ -571,6 +589,10 @@ class IOE():
 
         self.i2c_write8(io_pin.reg_m1, pm1)
         self.i2c_write8(io_pin.reg_m2, pm2)
+
+        # Set up Schmitt trigger mode on inputs
+        if mode in [PIN_MODE_PU, PIN_MODE_IN]:
+            self.change_bit(io_pin.reg_ps, io_pin.pin, schmitt_trigger)
 
         # 5th bit of mode encodes default output pin state
         self.i2c_write8(io_pin.reg_p, (initial_state << 3) | io_pin.pin)
