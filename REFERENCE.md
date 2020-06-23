@@ -11,6 +11,8 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
       - [Output](#output)
     - [Analog Inputs (ADC)](#analog-inputs-adc)
     - [Pulse Width Modulation Outputs (PWM)](#pulse-width-modulation-outputs-pwm)
+    - [Rotary Encoder Decoding](#rotary-encoder-decoding)
+    - [Configuring Interrupts](#configuring-interrupts)
 
 ## Pins
 
@@ -146,6 +148,12 @@ Pins 1, 2, 4, 5, and 6 support PWM output as marked. Additionally pins 7, 8, 9 a
 ioe.set_mode(1, ioexpander.PWM)
 ```
 
+PWM outputs can optionally be inverted which us useful where you might be driving inverting buffers or common-cathode LEDs:
+
+```python
+ioe.set_mode(1, ioexpander.PWM, invert=True)
+```
+
 PWM, by default, uses the 24MHz FSYS clock and has  16bit period and duty-cycle registers.
 
 There are 8 dividers available to slow the clock input into the PWM generator:
@@ -173,9 +181,91 @@ For example, for a 50Hz servo frequency you would use a 1/8 divider, and a perio
 24,000,000 / 8 / 60,000 = 50
 ````
 
-``python
+```python
 ioe.set_pwm_control(divider=8)
 ioe.set_pwm_period(60000)
 ```
 
 Then you can use duty-cycle values from 3000 to 6000 (1ms to 2ms) to create a servo control pulse.
+
+### Rotary Encoder Decoding
+
+The IO Expander supports decoding the waveform from up to four rotary encoders. The A and B pins must be specified and are configured as schmitt trigger inputs with a pull-up, if the C pin is specified then it's set to open-drain and driven low. For example:
+
+```python
+ENC_CHANNEL = 1
+POT_ENC_A = 12
+POT_ENC_B = 3
+POT_ENC_C = 11
+ioe.setup_rotary_encoder(ENC_CHANNEL, POT_ENC_A, POT_ENC_B, pin_c=POT_ENC_C)
+```
+
+Each encoder channel has its own signed, 8bit count register which stores the continuous count of pulses as the encoder is rotated. This register is not reset between reads, and will overflow from 128 to -127 in one direction, and from 128 to -127 in the other.
+
+In order to maintain a count across reads, this overflow event should be used to increment/decrement an offset which is then added to the register value. This is all done inside the IO Expander library, so you can simply read a continuous value using:
+
+```python
+count = ioe.read_rotary_encoder(1)
+```
+
+This value will correspond to the number of rotations of your rotary encoder dial, multiplied by the resolution of the encoder.
+
+The rotary encoder channels will assert an interrupt when a value is changed, in your program main loop you should check for this interrupt, read the encoder value and clear the interrupt flag:
+
+```
+while True:
+    if ioe.get_interrupt():
+        count = ioe.read_rotary_encoder(1)
+        ioe.clear_interrupt()
+```
+
+Note: in order to track overflows you will need to ensure this interrupt code can run fast enough to catch them. In most cases - ie: a person turning a dial with a 24 step resolution - even 1-second intervals are fine, but for decoding a motor you will want to sample much faster. For example a motor running at 20k RPM with a 12 step resolution would need to be sampled around 31 times a second or approximately every 30ms.
+
+### Configuring Interrupts
+
+IO Expander has an interrupt register to indicate a variety of state changes. On its own this interrupt register isn't much more useful than polling, but IO Expander can also generate an interrupt on its INT pin - connected to BCM 4 via Breakout Garden HAT - which you can then monitor with your GPIO library of choice.
+
+By default the interrupt output pin is not used, but you can enable it on setup like so:
+
+```python
+import ioexpander
+
+ioe = ioexpander.IOE(interrupt_pin=4)
+```
+
+In this instance `4` corresponds to `BCM4` on the Raspberry Pi. Specifying an interrupt pin will enable interrupt output on the IO Expander and set up `RPi.GPIO`.
+
+Alternatively you can handle the interrupt how you see fit by initialising the library and enabling the interrupt output manually:
+
+```python
+import ioexpander
+
+ioe = ioexpander.IOE()
+ioe.enable_interrupt_out()
+```
+
+In either case the current state of the interrupt register (and pin) can be read by running:
+
+```python
+ioe.get_interrupt()
+```
+
+And cleared with:
+
+```python
+ioe.clear_interrupt()
+```
+
+If you're using the IO Expander library to handle interrupts then you can bind a handler to the interrupt event:
+
+```python
+import ioexpander
+
+ioe = ioexpander.IOE(interrupt_pin=4)
+
+def callback(channel):
+    # Handle interrupt here
+    ioe.clear_interrupt()
+
+ioe.on_interrupt(callback)
+```
