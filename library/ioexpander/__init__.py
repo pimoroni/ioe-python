@@ -304,7 +304,7 @@ class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
 
 
 class IOE():
-    def __init__(self, i2c_addr=I2C_ADDR, interrupt_timeout=1.0, interrupt_pin=None, gpio=None):
+    def __init__(self, i2c_addr=I2C_ADDR, interrupt_timeout=1.0, interrupt_pin=None, gpio=None, skip_chip_id_check=False):
         self._i2c_addr = i2c_addr
         self._i2c_dev = SMBus(1)
         self._debug = False
@@ -340,6 +340,11 @@ class IOE():
             ADC_PIN(0, 7, 2),
             ADC_PIN(1, 7, 0)
         ]
+
+        if not skip_chip_id_check:
+            chip_id = (self.i2c_read8(REG_CHIP_ID_H) << 8) | self.i2c_read8(REG_CHIP_ID_L)
+            if chip_id != CHIP_ID:
+                raise RuntimeError("Chip ID invalid: {:04x} expected: {:04x}.".format(chip_id, CHIP_ID))
 
     def i2c_read8(self, reg):
         """Read a single (8bit) register from the device."""
