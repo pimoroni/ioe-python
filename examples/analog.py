@@ -28,6 +28,6 @@ while True:
     if adc != last_adc:
         print("{:.2f}v".format(adc))
         last_adc = adc
- 
+
     time.sleep(1.0 / 30)
 

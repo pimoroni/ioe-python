@@ -14,7 +14,7 @@ Press Ctrl+C to exit.
 
 PIN_PIR_SENS = 1
 PIN_PIR_OUT = 9
-PIN_PIR_OEN = 6 
+PIN_PIR_OEN = 6
 PIN_RED = 3
 PIN_GREEN = 7
 PIN_BLUE = 2
@@ -29,7 +29,7 @@ ioe.set_pwm_control(divider=1)  # PWM as fast as we can to avoid LED flicker
 
 
 ioe.set_mode(PIN_PIR_SENS, io.OUT)
-ioe.set_mode(PIN_PIR_OUT, io.ADC) 
+ioe.set_mode(PIN_PIR_OUT, io.ADC)
 ioe.set_mode(PIN_PIR_OEN, io.OUT)
 
 ioe.output(PIN_PIR_SENS, 0)

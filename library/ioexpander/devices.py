@@ -5,7 +5,7 @@ import ioexpander
 class RGBLED:
     def __init__(self, ioe=None, i2c_addr=None, pin_r=1, pin_g=3, pin_b=5, invert=False, brightness=0.05):
         """RGB LED Device.
-        
+
         IO Expander helper class to drive a single RGB LED connected to three PWM pins.
 
         Note: Will set the global PWM period and divider.
@@ -17,7 +17,7 @@ class RGBLED:
         :param pin_b: Pin for the blue LED
         :param invert: Whether to invert the PWM signal (for common-cathode LEDs)
         :param brightness: LED brightness- translates to the maximum PWM duty cycle
-        
+
         """
         if ioe is None:
             ioe = ioexpander.IOE(i2c_addr=i2c_addr)
@@ -76,5 +76,3 @@ class RGBLED:
         self.ioe.output(self.pin_r, r)
         self.ioe.output(self.pin_g, g)
         self.ioe.output(self.pin_b, b)
-
-

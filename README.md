@@ -22,4 +22,6 @@ Latest/development library and dependencies from GitHub:
 
 Stable (library only) from PyPi:
 
-* Just run `sudo pip3 install pimoroni-ioexpander`
+* Just run `pip3 install pimoroni-ioexpander`
+
+In some cases you might need to use `sudo`.

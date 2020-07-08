@@ -18,7 +18,7 @@ ioe = io.IOE(i2c_addr=0x18)
 ioe.set_mode(14, io.IN_PU)
 
 last_value = io.HIGH
-   
+
 while True:
     value = ioe.input(14)
 

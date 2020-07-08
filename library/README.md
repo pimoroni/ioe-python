@@ -5,6 +5,7 @@
 [![PyPi Package](https://img.shields.io/pypi/v/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
 [![Python Versions](https://img.shields.io/pypi/pyversions/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
 
+
 # Installing
 
 Stable library and dependencies from GitHub:
@@ -21,7 +22,10 @@ Latest/development library and dependencies from GitHub:
 
 Stable (library only) from PyPi:
 
-* Just run `sudo pip3 install pimoroni-ioexpander`
+* Just run `pip3 install pimoroni-ioexpander`
+
+In some cases you might need to use `sudo`.
+
 
 # Changelog
 

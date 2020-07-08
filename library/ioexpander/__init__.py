@@ -468,6 +468,11 @@ class IOE():
         self.change_bit(io_pin.reg_int_mask_p, io_pin.pin, enabled)
 
     def on_interrupt(self, callback):
+        """Attach an event handler to be run on interrupt.
+
+        :param callback: Callback function to run: callback(pin)
+
+        """
         if self._interrupt_pin is not None:
             self._gpio.add_event_detect(self._interrupt_pin, self._gpio.FALLING, callback=callback, bouncetime=1)
 
