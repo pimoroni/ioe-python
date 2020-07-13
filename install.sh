@@ -229,7 +229,8 @@ printf "\n"
 
 if [ -f "/usr/bin/pydoc" ]; then
 	printf "Generating documentation.\n"
-	pydoc -w $LIBRARY_NAME > /dev/null
+	pydoc -w ioexpander > /dev/null
+	mv ioexpander.html $LIBRARY_NAME.html
 	if [ -f "$LIBRARY_NAME.html" ]; then
 		cp $LIBRARY_NAME.html $RESOURCES_DIR/docs.html
 		rm -f $LIBRARY_NAME.html
