@@ -495,8 +495,10 @@ class _IO:
                 print("Reading ADC from pin {}".format(pin))
             self.clr_bits(self.REG_ADCCON0, 0x0F)
             self.set_bits(self.REG_ADCCON0, io_pin.adc_channel)
-            self.i2c_write8(self.REG_AINDIDS, 0)
-            self.set_bit(self.REG_AINDIDS, io_pin.adc_channel)
+            if io_pin.adc_channel > 8:
+                self.i2c_write8(self.REG_AINDIDS1, 1 << (io_pin.adc_channel - 8))
+            else:
+                self.i2c_write8(self.REG_AINDIDS0, 1 << io_pin.adc_channel)
             self.set_bit(self.REG_ADCCON1, 0)
 
             self.clr_bit(self.REG_ADCCON0, 7)  # ADCF - Clear the conversion complete flag

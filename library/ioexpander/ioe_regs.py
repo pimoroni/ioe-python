@@ -169,7 +169,7 @@ class REGS:
     REG_SPCR2 = 0xcc    # Page 1 # Reassigned from 0xb3 to avoid collision
     REG_SPSR = 0xb4
     REG_SPDR = 0xb5
-    REG_AINDIDS = 0xb6
+    REG_AINDIDS0 = 0xb6
     REG_EIPH = 0xb7     # Read only
     REG_SCON_1 = 0xb8
     REG_PDTEN = 0xb9    # TA protected
