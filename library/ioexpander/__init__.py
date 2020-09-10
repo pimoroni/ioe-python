@@ -659,7 +659,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
     ):
         self._pins = [
             PIN(port=3, pin=5),
-            PIN(port=3, pin=7),
+            PIN(port=3, pin=6),
             ADC_PIN(port=0, pin=6, adc_channel=3),
             ADC_PIN(port=0, pin=7, adc_channel=2),
             ADC_PIN(port=1, pin=7, adc_channel=0),
