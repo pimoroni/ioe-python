@@ -213,12 +213,7 @@ class _IO:
             self.output(pin_c, 0)
 
         self.i2c_write8(
-            [
-                self.REG_ENC_1_CFG,
-                self.REG_ENC_2_CFG,
-                self.REG_ENC_3_CFG,
-                self.REG_ENC_4_CFG,
-            ][channel],
+            [self.REG_ENC_1_CFG, self.REG_ENC_2_CFG, self.REG_ENC_3_CFG, self.REG_ENC_4_CFG][channel],
             pin_a | (pin_b << 4),
         )
         self.change_bit(self.REG_ENC_EN, channel * 2 + 1, count_microsteps)
@@ -228,12 +223,7 @@ class _IO:
         """Read the step count from a rotary encoder."""
         channel -= 1
         last = self._encoder_last[channel]
-        reg = [
-            self.REG_ENC_1_COUNT,
-            self.REG_ENC_2_COUNT,
-            self.REG_ENC_3_COUNT,
-            self.REG_ENC_4_COUNT,
-        ][channel]
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
         value = self.i2c_read8(reg)
 
         if value & 0b10000000:
@@ -604,12 +594,7 @@ class IOE(_IO, ioe_regs.REGS):
         self._regs_m2 = [self.REG_P0M2, self.REG_P1M2, -1, self.REG_P3M2]
         self._regs_p = [self.REG_P0, self.REG_P1, self.REG_P2, self.REG_P3]
         self._regs_ps = [self.REG_P0S, self.REG_P1S, self.REG_P2S, self.REG_P3S]
-        self._regs_int_mask_p = [
-            self.REG_INT_MASK_P0,
-            self.REG_INT_MASK_P1,
-            -1,
-            self.REG_INT_MASK_P3,
-        ]
+        self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, -1, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1]
 
@@ -620,24 +605,10 @@ class IOE(_IO, ioe_regs.REGS):
         self._regs_pwmph = [self.REG_PWMPH]
 
         self._regs_pwml = [
-            [
-                self.REG_PWM0L,
-                self.REG_PWM1L,
-                self.REG_PWM2L,
-                self.REG_PWM3L,
-                self.REG_PWM4L,
-                self.REG_PWM5L,
-            ],
+            [self.REG_PWM0L, self.REG_PWM1L, self.REG_PWM2L, self.REG_PWM3L, self.REG_PWM4L, self.REG_PWM5L],
         ]
         self._regs_pwmh = [
-            [
-                self.REG_PWM0H,
-                self.REG_PWM1H,
-                self.REG_PWM2H,
-                self.REG_PWM3H,
-                self.REG_PWM4H,
-                self.REG_PWM5H,
-            ],
+            [self.REG_PWM0H, self.REG_PWM1H, self.REG_PWM2H, self.REG_PWM3H, self.REG_PWM4H, self.REG_PWM5H],
         ]
 
         self._chip_id = self.CHIP_ID
@@ -690,63 +661,24 @@ class SuperIOE(_IO, sioe_regs.REGS):
         self._regs_m2 = [self.REG_P0M2, self.REG_P1M2, self.REG_P2M2, self.REG_P3M2]
         self._regs_p = [self.REG_P0, self.REG_P1, self.REG_P2, self.REG_P3]
         self._regs_ps = [self.REG_P0S, self.REG_P1S, self.REG_P2S, self.REG_P3S]
-        self._regs_int_mask_p = [
-            self.REG_INT_MASK_P0,
-            self.REG_INT_MASK_P1,
-            self.REG_INT_MASK_P2,
-            self.REG_INT_MASK_P3,
-        ]
+        self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, self.REG_INT_MASK_P2, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1, self.REG_PIOCON2]
 
-        self._regs_pwmcon0 = [
-            self.REG_PWM0CON0,
-            self.REG_PWM1CON0,
-            self.REG_PWM2CON0,
-            self.REG_PWM3CON0,
-        ]
-        self._regs_pwmcon1 = [
-            self.REG_PWM0CON1,
-            self.REG_PWM1CON1,
-            self.REG_PWM2CON1,
-            self.REG_PWM3CON1,
-        ]
+        self._regs_pwmcon0 = [self.REG_PWM0CON0, self.REG_PWM1CON0, self.REG_PWM2CON0, self.REG_PWM3CON0]
+        self._regs_pwmcon1 = [self.REG_PWM0CON1, self.REG_PWM1CON1, self.REG_PWM2CON1, self.REG_PWM3CON1]
 
-        self._regs_pwmpl = [
-            self.REG_PWM0PL,
-            self.REG_PWM1PL,
-            self.REG_PWM2PL,
-            self.REG_PWM3PL,
-        ]
-        self._regs_pwmph = [
-            self.REG_PWM0PH,
-            self.REG_PWM1PH,
-            self.REG_PWM2PH,
-            self.REG_PWM3PH,
-        ]
+        self._regs_pwmpl = [self.REG_PWM0PL, self.REG_PWM1PL, self.REG_PWM2PL, self.REG_PWM3PL]
+        self._regs_pwmph = [self.REG_PWM0PH, self.REG_PWM1PH, self.REG_PWM2PH, self.REG_PWM3PH]
 
         self._regs_pwml = [
-            [
-                self.REG_PWM0C0L,
-                self.REG_PWM0C1L,
-                self.REG_PWM0C2L,
-                self.REG_PWM0C3L,
-                self.REG_PWM0C4L,
-                self.REG_PWM0C5L,
-            ],
+            [self.REG_PWM0C0L, self.REG_PWM0C1L, self.REG_PWM0C2L, self.REG_PWM0C3L, self.REG_PWM0C4L, self.REG_PWM0C5L],
             [self.REG_PWM1C0L, self.REG_PWM1C1L],
             [self.REG_PWM2C0L, self.REG_PWM2C1L],
             [self.REG_PWM3C0L, self.REG_PWM3C1L],
         ]
         self._regs_pwmh = [
-            [
-                self.REG_PWM0C0H,
-                self.REG_PWM0C1H,
-                self.REG_PWM0C2H,
-                self.REG_PWM0C3H,
-                self.REG_PWM0C4H,
-                self.REG_PWM0C5H,
-            ],
+            [self.REG_PWM0C0H, self.REG_PWM0C1H, self.REG_PWM0C2H, self.REG_PWM0C3H, self.REG_PWM0C4H, self.REG_PWM0C5H],
             [self.REG_PWM1C0H, self.REG_PWM1C1H],
             [self.REG_PWM2C0H, self.REG_PWM2C1H],
             [self.REG_PWM3C0H, self.REG_PWM3C1H],
