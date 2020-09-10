@@ -18,8 +18,6 @@ PIN_RED = 15
 PIN_GREEN = 19
 PIN_BLUE = 23
 
-PIN_TEST = 1
-
 BRIGHTNESS = 0.05               # Effectively the maximum fraction of the period that the LED will be on
 PERIOD = int(255 / BRIGHTNESS)  # Add a period large enough to get 0-255 steps at the desired brightness
 
@@ -32,15 +30,11 @@ ioe.set_pwm_control(divider=1)  # PWM as fast as we can to avoid LED flicker
 ioe.set_pwm_period(PERIOD, pwm_generator=1)
 ioe.set_pwm_control(divider=1, pwm_generator=1)
 
-ioe.set_mode(PIN_TEST, io.OUT)
-
 ioe.set_mode(PIN_RED, io.PWM)
 ioe.set_mode(PIN_GREEN, io.PWM)
 ioe.set_mode(PIN_BLUE, io.PWM)
 
 print("Running LED with {} brightness steps.".format(int(PERIOD * BRIGHTNESS)))
-
-test = 1
 
 while True:
     h = time.time() / 10.0
@@ -49,8 +43,5 @@ while True:
     ioe.output(PIN_RED, r)
     ioe.output(PIN_GREEN, g)
     ioe.output(PIN_BLUE, b)
-    ioe.output(PIN_TEST, test)
-    test = not test
 
     time.sleep(1.0 / 30)
-
