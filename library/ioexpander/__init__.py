@@ -349,9 +349,8 @@ class IOE():
     def i2c_read8(self, reg):
         """Read a single (8bit) register from the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg])
-        self._i2c_dev.i2c_rdwr(msg_w)
         msg_r = i2c_msg.read(self._i2c_addr, 1)
-        self._i2c_dev.i2c_rdwr(msg_r)
+        self._i2c_dev.i2c_rdwr(msg_w,msg_r)
 
         return list(msg_r)[0]
 
