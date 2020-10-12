@@ -5,6 +5,15 @@
 [![PyPi Package](https://img.shields.io/pypi/v/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
 [![Python Versions](https://img.shields.io/pypi/pyversions/pimoroni-ioexpander.svg)](https://pypi.python.org/pypi/pimoroni-ioexpander)
 
+IO Expander Breakout uses a Nuvoton MS51 microcontroller and I2C to give you 14 additional input/output pins to connect things up to. Eight of the pins are hooked up to an Analog to Digital Converter and six of the pins can be used as (up to 16-bit) PWM outputs.
+
+This library is also used to power our other Nuvoton-based boards and breakouts!
+
+## Where to buy
+
+* IO Expander Breakout: https://shop.pimoroni.com/products/io-expander
+* RGB Potentiometer Breakout: https://shop.pimoroni.com/products/rgb-potentiometer-breakout
+* RGB Encoder Breakout: https://shop.pimoroni.com/products/rgb-encoder-breakout
 
 # Installing
 
