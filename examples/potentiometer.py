@@ -6,9 +6,15 @@ import ioexpander as io
 
 print("""potentiometer.py
 
+Change the I2C_ADDR to:
+ - 0x0E to use with the Potentiometer breakout.
+ - 0x18 to use with IO Expander.
+
 Press Ctrl+C to exit.
 
 """)
+
+I2C_ADDR = 0x0E  # 0x18 for IO Expander, 0x0E for the potentiometer breakout
 
 PIN_RED = 1
 PIN_GREEN = 7
@@ -21,7 +27,7 @@ POT_ENC_C = 11
 BRIGHTNESS = 0.5                # Effectively the maximum fraction of the period that the LED will be on
 PERIOD = int(255 / BRIGHTNESS)  # Add a period large enough to get 0-255 steps at the desired brightness
 
-ioe = io.IOE(i2c_addr=0x11)
+ioe = io.IOE(i2c_addr=I2C_ADDR)
 
 ioe.set_mode(POT_ENC_A, io.PIN_MODE_PP)
 ioe.set_mode(POT_ENC_B, io.PIN_MODE_PP)
