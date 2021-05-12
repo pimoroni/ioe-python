@@ -3,7 +3,7 @@ from colorsys import hsv_to_rgb
 import ioexpander as io
 
 
-ioe = io.IOE(i2c_addr=0x18)
+ioe = io.IOE(i2c_addr=0x19)
 chip_id = ioe.get_chip_id()
 
 print("Chip ID: {:04x}".format(chip_id))
@@ -18,7 +18,7 @@ ioe.set_mode(12, io.ADC)  # P0.5 AIN4 - Red
 ioe.set_mode(11, io.ADC)  # P0.6 AIN3 - NH3
 ioe.set_mode(13, io.ADC)  # P0.7 AIN2 - OX
 
-ioe.set_mode(1, io.OUT)   # P1.5 Heater Enable
+ioe.set_mode(1, io.PIN_MODE_OD)   # P1.5 Heater Enable
 ioe.output(1, io.LOW)
 
 last_heater = 0
@@ -52,4 +52,4 @@ while True:
 
     print(ref, red, nh3, oxd)
 
-    time.sleep(1.0 / 30)
+    time.sleep(1.0)
