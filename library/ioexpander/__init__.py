@@ -350,7 +350,7 @@ class IOE():
         """Read a single (8bit) register from the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg])
         msg_r = i2c_msg.read(self._i2c_addr, 1)
-        self._i2c_dev.i2c_rdwr(msg_w,msg_r)
+        self._i2c_dev.i2c_rdwr(msg_w, msg_r)
 
         return list(msg_r)[0]
 
@@ -688,9 +688,9 @@ class IOE():
         else:
             if value == LOW:
                 if self._debug:
-                    print("Outputting LOW to pin: {pin}".format(pin=pin, value=value))
+                    print("Outputting LOW to pin: {pin}".format(pin=pin))
                 self.clr_bit(io_pin.reg_p, io_pin.pin)
             elif value == HIGH:
                 if self._debug:
-                    print("Outputting HIGH to pin: {pin}".format(pin=pin, value=value))
+                    print("Outputting HIGH to pin: {pin}".format(pin=pin))
                 self.set_bit(io_pin.reg_p, io_pin.pin)
