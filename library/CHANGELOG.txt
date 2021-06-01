@@ -1,3 +1,8 @@
+0.0.2
+-----
+
+* Call read/write in a single i2c_rdwr to maintain thread safety
+
 0.0.1
 -----
 
