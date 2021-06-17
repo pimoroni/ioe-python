@@ -359,6 +359,43 @@ class IOE():
         msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
         self._i2c_dev.i2c_rdwr(msg_w)
 
+    def get_pin(self, pin):
+        """Get a pin definition from its index."""
+        if pin < 1 or pin > len(self._pins):
+            raise ValueError("Pin should be in range 1-14.")
+
+        return self._pins[pin - 1]
+
+    def setup_switch_counter(self, pin, mode=IN_PU):
+        """Enable switch counting on a pin."""
+        io_pin = self.get_pin(pin)
+
+        if io_pin.port not in (0, 1):
+            raise ValueError("Pin {} does not support switch counting.".format(pin))
+
+        if mode not in [IN, IN_PU]:
+            raise ValueError("Pin mode should be one of IN or IN_PU")
+
+        self.set_mode(pin, mode, schmitt_trigger=True)
+
+        sw_reg = [REG_SWITCH_EN_P0, REG_SWITCH_EN_P1][io_pin.port]
+        self.set_bit(sw_reg, io_pin.pin)
+
+    def read_switch_counter(self, pin):
+        """Read the switch count value on a pin."""
+        io_pin = self.get_pin(pin)
+
+        if io_pin.port not in (0, 1):
+            raise ValueError("Pin {} does not support switch counting.".format(pin))
+
+        sw_reg = [REG_SWITCH_P00, REG_SWITCH_P10][io_pin.port] + io_pin.pin
+
+        value = self.i2c_read8(sw_reg)
+
+        # The switch counter is 7-bit
+        # The most significant bit encodes the current GPIO state
+        return value & 0x7f, value & 0x80 == 0x80
+
     def setup_rotary_encoder(self, channel, pin_a, pin_b, pin_c=None, count_microsteps=False):
         """Set up a rotary encoder."""
         channel -= 1
@@ -459,10 +496,7 @@ class IOE():
         :param enabled: True/False for enabled/disabled
 
         """
-        if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-14.")
-
-        io_pin = self._pins[pin - 1]
+        io_pin = self.get_pin(pin)
 
         self.change_bit(io_pin.reg_int_mask_p, io_pin.pin, enabled)
 
@@ -574,10 +608,7 @@ class IOE():
         :param mode: one of the supplied IN, OUT, PWM or ADC constants
 
         """
-        if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-14.")
-
-        io_pin = self._pins[pin - 1]
+        io_pin = self.get_pin(pin)
         if io_pin.mode == mode:
             return
 
@@ -632,10 +663,7 @@ class IOE():
         :param adc_timeout: Timeout (in seconds) for an ADC read (default 1.0)
 
         """
-        if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-14.")
-
-        io_pin = self._pins[pin - 1]
+        io_pin = self.get_pin(pin)
 
         if io_pin.mode == PIN_MODE_ADC:
             if self._debug:
@@ -673,10 +701,7 @@ class IOE():
         :param value: Either True/False for OUT, or a number between 0 and PWM period for PWM.
 
         """
-        if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-14.")
-
-        io_pin = self._pins[pin - 1]
+        io_pin = self.get_pin(pin)
 
         if io_pin.mode == PIN_MODE_PWM:
             if self._debug:
