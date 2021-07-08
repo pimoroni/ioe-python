@@ -396,6 +396,17 @@ class IOE():
         # The most significant bit encodes the current GPIO state
         return value & 0x7f, value & 0x80 == 0x80
 
+    def clear_switch_counter(self, pin):
+        """Clear the switch count value on a pin to 0."""
+        io_pin = self.get_pin(pin)
+
+        if io_pin.port not in (0, 1):
+            raise ValueError("Pin {} does not support switch counting.".format(pin))
+
+        sw_reg = [REG_SWITCH_P00, REG_SWITCH_P10][io_pin.port] + io_pin.pin
+
+        self.i2c_write8(sw_reg, 0)
+
     def setup_rotary_encoder(self, channel, pin_a, pin_b, pin_c=None, count_microsteps=False):
         """Set up a rotary encoder."""
         channel -= 1
