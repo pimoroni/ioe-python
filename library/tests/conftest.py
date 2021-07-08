@@ -13,7 +13,10 @@ def cleanup():
     """
 
     yield None
-    del sys.modules["ioexpander"]
+    try:
+        del sys.modules["ioexpander"]
+    except KeyError:
+        pass
 
 
 @pytest.fixture(scope='function', autouse=False)
@@ -25,3 +28,10 @@ def smbus2():
     sys.modules['smbus2'] = smbus2
     yield smbus2
     del sys.modules['smbus2']
+
+
+@pytest.fixture(scope='function')
+def ioe():
+    from ioexpander import IOE
+    yield IOE(skip_chip_id_check=True)
+    del sys.modules["ioexpander"]
