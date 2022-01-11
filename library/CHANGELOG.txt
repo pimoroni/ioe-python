@@ -1,3 +1,8 @@
+0.0.3
+-----
+
+* Add support for 7-bit switch/pulse counters
+
 0.0.2
 -----
 
