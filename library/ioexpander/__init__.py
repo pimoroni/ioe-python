@@ -328,7 +328,7 @@ class IOE():
             PWM_PIN(1, 5, 5, REG_PIOCON1),
             PWM_PIN(1, 0, 2, REG_PIOCON0),
             PWM_PIN(1, 2, 0, REG_PIOCON0),
-            PWM_PIN(1, 4, 1, REG_PIOCON0),
+            PWM_PIN(1, 4, 1, REG_PIOCON1),
             PWM_PIN(0, 0, 3, REG_PIOCON0),
             PWM_PIN(0, 1, 4, REG_PIOCON0),
             ADC_OR_PWM_PIN(1, 1, 7, 1, REG_PIOCON0),
