@@ -72,7 +72,7 @@ class REGS:
 
 
 
-    REG_7D = 0x60 # Bit addressing
+    REG_P2 = 0x7d # Bit addressing
     REG_AUXR1 = 0x41
 
 
