@@ -33,6 +33,9 @@ ADC = PIN_MODE_ADC
 HIGH = 1
 LOW = 0
 
+CLOCK_FREQ = 24000000
+MAX_PERIOD = (1 << 16) - 1
+MAX_DIVIDER = (1 << 7)
 
 class PIN:
     def __init__(self, port=None, pin=None, enc_map=None):
@@ -117,6 +120,7 @@ class _IO:
         interrupt_pin=None,
         gpio=None,
         skip_chip_id_check=False,
+        perform_reset=False
     ):
         self._i2c_addr = i2c_addr
         self._i2c_dev = SMBus(1)
@@ -128,6 +132,17 @@ class _IO:
         self._encoder_offset = [0, 0, 0, 0]
         self._encoder_last = [0, 0, 0, 0]
 
+        # Check the chip ID first, before setting up any GPIO
+        if not skip_chip_id_check:
+            chip_id = self.get_chip_id()
+            if chip_id != self._chip_id:
+                raise RuntimeError("Chip ID invalid: {:04x} expected: {:04x}.".format(chip_id, self._chip_id))
+
+        # Reset the chip if requested, to put it into a known state
+        if perform_reset:
+            self.reset()
+
+        # Set up the interrupt pin on the Pi, and enable the chip's output
         if self._interrupt_pin is not None:
             if self._gpio is None:
                 import RPi.GPIO as GPIO
@@ -137,11 +152,6 @@ class _IO:
             self._gpio.setmode(GPIO.BCM)
             self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
             self.enable_interrupt_out()
-
-        if not skip_chip_id_check:
-            chip_id = (self.i2c_read8(self.REG_CHIP_ID_H) << 8) | self.i2c_read8(self.REG_CHIP_ID_L)
-            if chip_id != self._chip_id:
-                raise RuntimeError("Chip ID invalid: {:04x} expected: {:04x}.".format(chip_id, self._chip_id))
 
     def i2c_read8(self, reg):
         """Read a single (8bit) register from the device."""
@@ -375,14 +385,44 @@ class _IO:
         """Get the IOE chip ID."""
         return (self.i2c_read8(self.REG_CHIP_ID_H) << 8) | self.i2c_read8(self.REG_CHIP_ID_L)
 
-    def _pwm_load(self, reg):
+    def get_version(self):
+        """Get the IOE version."""
+        return (self.i2c_read8(self.REG_VERSION) << 8)
+
+    def reset(self):
+        set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
+
+        # Wait for a register to read its initialised value
+        value = self.i2c_read8(self.REG_USER_FLASH)
+        while value != 0x78:
+            time.sleep(0.001)
+            value = self.i2c_read8(self.REG_USER_FLASH)
+
+    def pwm_load(self, pwm_generator=0, wait_for_load=True):
         # Load new period and duty registers into buffer
         t_start = time.time()
-        self.set_bit(reg, 6)  # Set the "LOAD" bit of PWMCON0
-        while self.get_bit(reg, 6):
-            time.sleep(0.001)  # Wait for "LOAD" to complete
-            if time.time() - t_start >= self._timeout:
-                raise RuntimeError("Timed out waiting for PWM load!")
+        self.set_bit(self._regs_pwmcon0[pwm_generator], 6)  # Set the "LOAD" bit of PWMCON0
+        if wait_for_load:
+            while self.pwm_loading(pwm_generator):
+                time.sleep(0.001)  # Wait for "LOAD" to complete
+                if time.time() - t_start >= self._timeout:
+                    raise RuntimeError("Timed out waiting for PWM load!")
+
+    def pwm_loading(self, pwm_generator=0):
+        return self.get_bit(self._regs_pwmcon0[pwm_generator], 6)
+
+    def pwm_clear(self, pwm_generator=0, wait_for_clear=True):
+        # Clear the PWM counter
+        t_start = time.time()
+        self.set_bit(self._regs_pwmcon0[pwm_generator], 4)  # Set the "CLRPWM" bit of PWMCON0
+        if wait_for_clear:
+            while self.pwm_clearing(pwm_generator):
+                time.sleep(0.001)  # Wait for "LOAD" to complete
+                if time.time() - t_start >= self._timeout:
+                    raise RuntimeError("Timed out waiting for PWM clear!")
+
+    def pwm_clearing(self, pwm_generator=0):
+        return self.get_bit(self._regs_pwmcon0[pwm_generator], 4)
 
     def set_pwm_control(self, divider, pwm_generator=0):
         """Set PWM settings.
@@ -415,7 +455,7 @@ class _IO:
         pwmcon1 = self._regs_pwmcon1[pwm_generator]
         self.i2c_write8(pwmcon1, pwmdiv2)
 
-    def set_pwm_period(self, value, pwm_generator=0):
+    def set_pwm_period(self, value, pwm_generator=0, load=True):
         """Set the PWM period.
 
         The period is the point at which the PWM counter is reset to zero.
@@ -425,7 +465,6 @@ class _IO:
         Also specifies the maximum value that can be set in the PWM duty cycle.
 
         """
-        pwmcon0 = self._regs_pwmcon0[pwm_generator]
         pwmpl = self._regs_pwmpl[pwm_generator]
         pwmph = self._regs_pwmph[pwm_generator]
 
@@ -433,8 +472,30 @@ class _IO:
         self.i2c_write8(pwmpl, value & 0xFF)
         self.i2c_write8(pwmph, value >> 8)
 
-        self.set_bit(pwmcon0, 7)  # Set PWMRUN bit
-        self._pwm_load(pwmcon0)
+        # Commented out, as it gets set when the pin is configured
+        # pwmcon0 = self._regs_pwmcon0[pwm_generator]
+        # self.set_bit(pwmcon0, 7)  # Set PWMRUN bit
+
+        if load:
+            self.pwm_load(pwm_generator)
+
+    def set_pwm_frequency(self, frequency, pwm_generator=0, load=True):
+        period = 0
+        if frequency <= 0.0:
+            raise ValueError("Cannot have a frequency of zero or less.")
+
+        period = CLOCK_FREQ // frequency
+        divider = 1
+
+        while (period > MAX_PERIOD) and (divider < MAX_DIVIDER)
+            period = period >> 1
+            divider = divider << 1
+
+        period = min(period, MAX_PERIOD)
+        self.set_pwm_control(divider, pwm_generator)
+        self.set_pwm_period(period, pwm_generator, load)
+
+        return period
 
     def get_mode(self, pin):
         """Get the current mode of a pin."""
@@ -556,7 +617,7 @@ class _IO:
                 print("Outputting PWM to pin: {pin}".format(pin=pin))
             self.i2c_write8(self.get_pwm_regs(io_pin).pwml, value & 0xFF)
             self.i2c_write8(self.get_pwm_regs(io_pin).pwmh, value >> 8)
-            self._pwm_load(self.get_pwm_regs(io_pin).pwmcon0)
+            self.pwm_load(io_pin.pwm_generator)
 
         else:
             if value == LOW:
@@ -717,3 +778,43 @@ class SuperIOE(_IO, sioe_regs.REGS):
         # Mux p1.2 PWM over to PWM 1 Channel 0
         self.clr_bits(self.REG_AUXR4, 0b11)
         self.set_bits(self.REG_AUXR4, 0b10)
+
+    def activate_watchdog(self):
+        self.clear_watchdog_timeout()
+        self.set_bit(self.REG_PERIPHERALS, self.BIT_WATCHDOG)  # Activate the Watchdog
+
+    def deactivate_Watchdog(self):
+        self.clr_bit(self.REG_PERIPHERALS, self.BIT_WATCHDOG)  # Deactivate the watchdog
+
+    def is_watchdog_active(self):
+        return get_bit(self.REG_PERIPHERALS, self.BIT_WATCHDOG)
+
+    def reset_watchdog_counter(self):
+        self.set_bit(self.REG_WDCON, 6)  # Set the WDCLR bit to reset the counter
+
+    def watchdog_timeout_occurred(self):
+        return self.get_bit(self.REG_WDCON, 3)  # Get the WDTRF bit, which flags if a reset has occurred
+
+    def clear_watchdog_timeout(self):
+        self.clr_bit(self.REG_WDCON, 3)  # Clear the WDTRF bit that may have been set from a previous watchdog timeout
+
+    def set_watchdog_control(self, divider):
+        try:
+            wdtdiv = {
+                1: 0b000,
+                2: 0b001,
+                4: 0b010,
+                8: 0b011,
+                16: 0b100,
+                32: 0b101,
+                64: 0b110,
+                128: 0b111,
+            }[divider]
+        except KeyError:
+            raise ValueError("A clock divider of {}".format(divider))
+
+        wdt = self.i2c_read8(self.REG_WDCON)
+        wdt = wdt & 0b11111000  # Clear the WDPS bits
+        wdt = wdt | wdtdiv  # Set the new WDPS bits according to our divider
+
+        self.i2c_write8(self.REG_WDCON, wdt)

@@ -40,11 +40,13 @@ class REGS:
 
     REG_USER_FLASH = 0xD0
     REG_FLASH_PAGE = 0xF0
+
+    REG_PERIPHERALS  0xF7
+    BIT_WATCHDOG     0
+
     REG_DEBUG = 0xF8
 
     REG_P0 = 0x7B # Bit addressing
-
-
 
 
 
