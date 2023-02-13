@@ -390,7 +390,7 @@ class _IO:
         return (self.i2c_read8(self.REG_VERSION) << 8)
 
     def reset(self):
-        set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
+        self.set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
 
         # Wait for a register to read its initialised value
         value = self.i2c_read8(self.REG_USER_FLASH)
