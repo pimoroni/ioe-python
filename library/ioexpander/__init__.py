@@ -656,28 +656,28 @@ class SuperIOE(_IO, sioe_regs.REGS):
             PIN(port=3, pin=6, enc_map=15),
             ADC_PIN(port=0, pin=6, adc_channel=3, enc_map=11),
             ADC_PIN(port=0, pin=7, adc_channel=2, enc_map=13),
-            ADC_PIN(port=1, pin=7, adc_channel=0),
-            ADC_PIN(port=3, pin=0, adc_channel=1, enc_map=10),
-            ADC_PIN(port=0, pin=4, adc_channel=5, enc_map=9),
-            ADC_PIN(port=0, pin=5, adc_channel=4),
+            ADC_OR_PWM_PIN(port=1, pin=7, adc_channel=0, pwm_piocon=(1, 7), pwm_channel=(3, 0)),
+            ADC_OR_PWM_PIN(port=3, pin=0, adc_channel=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=10),
+            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3), enc_map=9),
+            ADC_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_channel=(0, 2)),
             ADC_PIN(port=1, pin=3, adc_channel=13, enc_map=0),
             ADC_PIN(port=2, pin=5, adc_channel=15),
-            ADC_PIN(port=1, pin=1, adc_channel=7, enc_map=7),
-            ADC_PIN(port=0, pin=3, adc_channel=6, enc_map=8),
+            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1), enc_map=7),
+            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_channel=(0, 5), enc_map=8),
             ADC_PIN(port=2, pin=4, adc_channel=12),
-            ADC_PIN(port=2, pin=3, adc_channel=11),
-            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_channel=(0, 0)),              # NO ALT
-            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),   # OR PWM 3 CH 0
-            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),   # OR PWM 3 CH 1
-            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),   # OR PWM 1 CH 1
-            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),   # OR PWM 2 CH 1
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),   # OR PWM 2 CH 0
-            PWM_PIN(port=2, pin=1, pwm_piocon=(2, 0), pwm_channel=(2, 0)),              # NO ALT
-            PWM_PIN(port=2, pin=2, pwm_piocon=(2, 1), pwm_channel=(1, 1)),              # NO ALT
-            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(1, 0), enc_map=3),   # OR PWM 1 CH 0 (default PWM 0 CH 0)
-            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_channel=(3, 0)),              # NO ALT
-            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_channel=(3, 1)),              # NO ALT
-            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=12),  # NO ALT
+            ADC_OR_PWM_PIN(port=2, pin=3, adc_channel=11, pwm_piocon=(2, 2), pwm_channel=(1, 0)),
+            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_channel=(0, 0)),                                      # NO ALT
+            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),                           # OR PWM 3 CH 0
+            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),                           # OR PWM 3 CH 1
+            ADC_OR_PWM_PIN(port=1, pin=4, adc_channel=14, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),    # OR PWM 1 CH 1
+            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),                           # OR PWM 2 CH 1
+            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),                           # OR PWM 2 CH 0
+            ADC_OR_PWM_PIN(port=2, pin=1, adc_channel=9, pwm_piocon=(2, 0), pwm_channel=(2, 0)),                # NO ALT
+            ADC_OR_PWM_PIN(port=2, pin=2, adc_channel=10, pwm_piocon=(2, 1), pwm_channel=(1, 1)),               # NO ALT
+            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(1, 0), enc_map=3),                           # OR PWM 1 CH 0 (default PWM 0 CH 0)
+            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_channel=(3, 0)),                                      # NO ALT
+            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_channel=(3, 1)),                                      # NO ALT
+            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=12),                          # NO ALT
         ]
 
         self._regs_m1 = [self.REG_P0M1, self.REG_P1M1, self.REG_P2M1, self.REG_P3M1]
