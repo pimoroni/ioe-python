@@ -159,7 +159,7 @@ class _IO:
     def get_pin(self, pin):
         """Get a pin definition from its index."""
         if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-14.")
+            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
 
         return self._pins[pin - 1]
 
