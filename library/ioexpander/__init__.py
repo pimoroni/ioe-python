@@ -9,7 +9,7 @@ __version__ = '0.0.3'
 
 
 # These values encode our desired pin function: IO, ADC, PWM
-# alongwide the GPIO MODE for that port and pin (section 8.1)
+# alongside the GPIO MODE for that port and pin (section 8.1)
 # the 5th bit additionally encodes the default output state
 PIN_MODE_IO = 0b00000  # General IO mode, IE: not ADC or PWM
 PIN_MODE_QB = 0b00000  # Output, Quasi-Bidirectional mode
@@ -23,6 +23,7 @@ MODE_NAMES = ("IO", "PWM", "ADC")
 GPIO_NAMES = ("QB", "PP", "IN", "OD")
 STATE_NAMES = ("LOW", "HIGH")
 
+# More convinient names for the pin functions
 IN = PIN_MODE_IN
 IN_PULL_UP = PIN_MODE_PU
 IN_PU = PIN_MODE_PU
@@ -38,6 +39,12 @@ MAX_PERIOD = (1 << 16) - 1
 MAX_DIVIDER = (1 << 7)
 
 class PIN:
+    """Pin.
+
+    Class to store details of an IO pin.
+
+    """
+
     def __init__(self, port=None, pin=None, enc_map=None):
         if getattr(self, "type", None) is None:
             self.type = [PIN_MODE_IO]
@@ -54,11 +61,32 @@ class PWM_PIN(PIN):
 
     """
 
-    def __init__(self, port=None, pin=None, pwm_piocon=None, pwm_channel=None, enc_map=None):
+    def __init__(self, port=None, pin=None, pwm_piocon=None, pwm_define=None, enc_map=None):
         PIN.__init__(self, port, pin, enc_map)
         self.type.append(PIN_MODE_PWM)
-        self.pwm_generator, self.pwm_channel = pwm_channel
         self.reg_iopwm, self.bit_iopwm = pwm_piocon
+        self.pwm_module, self.pwm_channel = pwm_define
+
+
+class DUAL_PWM_PIN(PWM_PIN):
+    """PWM Pin, with alt.
+
+    Class to store details of a PWM-enabled pin, with alt.
+
+    """
+
+    def __init__(self, port=None, pin=None, pwm_piocon=None, pwm_define=None, pwm_auxr=None, pwm_alt_define=None, enc_map=None):
+        PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_define, enc_map)
+        self.type.append(PIN_MODE_PWM)
+        self.reg_auxr, self.bit_auxr, self.val_auxr = pwm_auxr
+        self.pwm_alt_module, self.pwm_alt_channel = pwm_alt_define
+        self.using_alt = False
+
+    def is_using_alt(self):
+        return self.using_alt
+
+    def set_using_alt(self, use)
+        self.using_alt = use
 
 
 class ADC_PIN(PIN):
@@ -81,10 +109,20 @@ class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
 
     """
 
-    def __init__(self, port=None, pin=None, adc_channel=None, pwm_piocon=None, pwm_channel=None, enc_map=None):
+    def __init__(self, port=None, pin=None, adc_channel=None, pwm_piocon=None, pwm_define=None, enc_map=None):
         ADC_PIN.__init__(self, port, pin, adc_channel, enc_map)
-        PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_channel, enc_map)
+        PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_define, enc_map)
 
+class ADC_OR_DUAL_PWM_PIN(ADC_PIN, DUAL_PWM_PIN):
+    """ADC/PWM Pin, with alt
+
+    Class to store details of an ADC/PWM-enabled pin, with alt
+
+    """
+
+    def __init__(self, port=None, pin=None, adc_channel=None, pwm_piocon=None, pwm_define=None, pwm_auxr=None, pwm_alt_define=None, enc_map=None):
+        ADC_PIN.__init__(self, port, pin, adc_channel, enc_map)
+        DUAL_PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_define, pwm_auxr, pwm_alt_define, enc_map)
 
 class PinRegs:
     def __init__(self, m1=None, m2=None, p=None, ps=None, int_mask_p=None):
@@ -161,10 +199,43 @@ class _IO:
 
         return list(msg_r)[0]
 
+    def i2c_read12(self, reg_l, reg_h):
+        """Read two (8bit) register from the device, as a single read if they are consecutive."""
+        if reg_h = reg_l + 1:
+            msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
+            self._i2c_dev.i2c_rdwr(msg_w)
+            msg_r = i2c_msg.read(self._i2c_addr, 2)
+            self._i2c_dev.i2c_rdwr(msg_r)
+            return (list(msg_r)[1] << 4) | list(msg_r)[0]
+        else:
+            return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
+
+    def i2c_read16(self, reg_l, reg_h):
+        """Read two (8bit) register from the device, as a single read if they are consecutive."""
+        if reg_h = reg_l + 1:
+            msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
+            self._i2c_dev.i2c_rdwr(msg_w)
+            msg_r = i2c_msg.read(self._i2c_addr, 2)
+            self._i2c_dev.i2c_rdwr(msg_r)
+            return (list(msg_r)[1] << 8) | list(msg_r)[0]
+        else:
+            return (self.i2c_read8(reg_h) << 8) | self.i2c_read8(reg_l)
+
     def i2c_write8(self, reg, value):
         """Write a single (8bit) register to the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
         self._i2c_dev.i2c_rdwr(msg_w)
+
+    def i2c_write16(self, reg_l, reg_h, value):
+        """Write two (8bit) registers to the device, as a single write if they are consecutive."""
+        val_l = value & 0xff
+        val_h = (value >> 8) & 0xff
+        if reg_h = reg_l + 1:
+            msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
+            self._i2c_dev.i2c_rdwr(msg_w)
+        else:
+            i2c_write8(reg_l, val_l)
+            i2c_write8(reg_h, val_h)
 
     def get_pin(self, pin):
         """Get a pin definition from its index."""
@@ -247,6 +318,12 @@ class _IO:
         )
         self.change_bit(self.REG_ENC_EN, channel * 2 + 1, count_microsteps)
         self.set_bit(self.REG_ENC_EN, channel * 2)
+
+        # Reset internal encoder count to zero
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        self.i2c_write8(reg, 0)
+        self._encoder_last[channel] = 0
+        self._encoder_offset[channel] = 0
 
     def read_rotary_encoder(self, channel):
         """Read the step count from a rotary encoder."""
@@ -383,11 +460,12 @@ class _IO:
 
     def get_chip_id(self):
         """Get the IOE chip ID."""
-        return (self.i2c_read8(self.REG_CHIP_ID_H) << 8) | self.i2c_read8(self.REG_CHIP_ID_L)
+        #return (self.i2c_read8(self.REG_CHIP_ID_H) << 8) | self.i2c_read8(self.REG_CHIP_ID_L)
+        return self.i2c_read16(self.REG_CHIP_ID_L, self.REG_CHIP_ID_H)
 
     def get_version(self):
         """Get the IOE version."""
-        return (self.i2c_read8(self.REG_VERSION) << 8)
+        return self.i2c_read8(self.REG_VERSION)
 
     def reset(self):
         self.set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
@@ -398,33 +476,33 @@ class _IO:
             time.sleep(0.001)
             value = self.i2c_read8(self.REG_USER_FLASH)
 
-    def pwm_load(self, pwm_generator=0, wait_for_load=True):
+    def pwm_load(self, pwm_module=0, wait_for_load=True):
         # Load new period and duty registers into buffer
         t_start = time.time()
-        self.set_bit(self._regs_pwmcon0[pwm_generator], 6)  # Set the "LOAD" bit of PWMCON0
+        self.set_bit(self._regs_pwmcon0[pwm_module], 6)  # Set the "LOAD" bit of PWMCON0
         if wait_for_load:
-            while self.pwm_loading(pwm_generator):
+            while self.pwm_loading(pwm_module):
                 time.sleep(0.001)  # Wait for "LOAD" to complete
                 if time.time() - t_start >= self._timeout:
                     raise RuntimeError("Timed out waiting for PWM load!")
 
-    def pwm_loading(self, pwm_generator=0):
-        return self.get_bit(self._regs_pwmcon0[pwm_generator], 6)
+    def pwm_loading(self, pwm_module=0):
+        return self.get_bit(self._regs_pwmcon0[pwm_module], 6)
 
-    def pwm_clear(self, pwm_generator=0, wait_for_clear=True):
+    def pwm_clear(self, pwm_module=0, wait_for_clear=True):
         # Clear the PWM counter
         t_start = time.time()
-        self.set_bit(self._regs_pwmcon0[pwm_generator], 4)  # Set the "CLRPWM" bit of PWMCON0
+        self.set_bit(self._regs_pwmcon0[pwm_module], 4)  # Set the "CLRPWM" bit of PWMCON0
         if wait_for_clear:
-            while self.pwm_clearing(pwm_generator):
+            while self.pwm_clearing(pwm_module):
                 time.sleep(0.001)  # Wait for "LOAD" to complete
                 if time.time() - t_start >= self._timeout:
                     raise RuntimeError("Timed out waiting for PWM clear!")
 
-    def pwm_clearing(self, pwm_generator=0):
-        return self.get_bit(self._regs_pwmcon0[pwm_generator], 4)
+    def pwm_clearing(self, pwm_module=0):
+        return self.get_bit(self._regs_pwmcon0[pwm_module], 4)
 
-    def set_pwm_control(self, divider, pwm_generator=0):
+    def set_pwm_control(self, divider, pwm_module=0):
         """Set PWM settings.
 
         PWM is driven by the 24MHz FSYS clock by default.
@@ -452,10 +530,10 @@ class _IO:
         # PWMTYP - PWM type select: 0 edge-aligned, 1 center-aligned
         # FBINEN - Fault-break input enable
 
-        pwmcon1 = self._regs_pwmcon1[pwm_generator]
+        pwmcon1 = self._regs_pwmcon1[pwm_module]
         self.i2c_write8(pwmcon1, pwmdiv2)
 
-    def set_pwm_period(self, value, pwm_generator=0, load=True):
+    def set_pwm_period(self, value, pwm_module=0, load=True):
         """Set the PWM period.
 
         The period is the point at which the PWM counter is reset to zero.
@@ -465,21 +543,22 @@ class _IO:
         Also specifies the maximum value that can be set in the PWM duty cycle.
 
         """
-        pwmpl = self._regs_pwmpl[pwm_generator]
-        pwmph = self._regs_pwmph[pwm_generator]
+        pwmpl = self._regs_pwmpl[pwm_module]
+        pwmph = self._regs_pwmph[pwm_module]
 
-        value &= 0xFFFF
-        self.i2c_write8(pwmpl, value & 0xFF)
-        self.i2c_write8(pwmph, value >> 8)
+        #value &= 0xFFFF
+        #self.i2c_write8(pwmpl, value & 0xFF)
+        #self.i2c_write8(pwmph, value >> 8)
+        self.i2c_write16(pwmpl, pwmph, value)
 
         # Commented out, as it gets set when the pin is configured
-        # pwmcon0 = self._regs_pwmcon0[pwm_generator]
+        # pwmcon0 = self._regs_pwmcon0[pwm_module]
         # self.set_bit(pwmcon0, 7)  # Set PWMRUN bit
 
         if load:
-            self.pwm_load(pwm_generator)
+            self.pwm_load(pwm_module)
 
-    def set_pwm_frequency(self, frequency, pwm_generator=0, load=True):
+    def set_pwm_frequency(self, frequency, pwm_module=0, load=True):
         period = 0
         if frequency <= 0.0:
             raise ValueError("Cannot have a frequency of zero or less.")
@@ -492,8 +571,8 @@ class _IO:
             divider = divider << 1
 
         period = min(period, MAX_PERIOD)
-        self.set_pwm_control(divider, pwm_generator)
-        self.set_pwm_period(period, pwm_generator, load)
+        self.set_pwm_control(divider, pwm_module)
+        self.set_pwm_period(period, pwm_module, load)
 
         return period
 
@@ -531,9 +610,14 @@ class _IO:
 
         if mode == PIN_MODE_PWM:
             self.set_bit(self.get_pwm_regs(io_pin).piocon, io_pin.bit_iopwm)
-            if io_pin.pwm_generator == 0:
-                self.change_bit(self.REG_PNP, io_pin.bit_iopwm, invert)
-            self.set_bit(self.get_pwm_regs(io_pin).pwmcon0, 7)  # Set PWMRUN bit
+            if isinstance(io_pin, DUAL_PWM) and io_pin.is_using_alt():
+                if io_pin.pwm_module == 0:  # Only module 0's outputs can be inverted
+                    self.change_bit(self.REG_PNP, io_pin.bit_iopwm, invert)
+                self.set_bit(self.get_alt_pwm_regs(io_pin).pwmcon0, 7)  # Set PWMRUN bit
+            else:
+                if io_pin.pwm_module == 0:  # Only module 0's outputs can be inverted
+                    self.change_bit(self.REG_PNP, io_pin.bit_iopwm, invert)
+                self.set_bit(self.get_pwm_regs(io_pin).pwmcon0, 7)  # Set PWMRUN bit
 
         else:
             if PIN_MODE_PWM in io_pin.type:
@@ -593,10 +677,11 @@ class _IO:
                 if time.time() - t_start >= adc_timeout:
                     raise RuntimeError("Timeout waiting for ADC conversion!")
 
-            hi = self.i2c_read8(self.REG_ADCRH)
-            lo = self.i2c_read8(self.REG_ADCRL)
-            return ((hi << 4) | lo) / 4095.0 * self._vref
-
+            #hi = self.i2c_read8(self.REG_ADCRH)
+            #lo = self.i2c_read8(self.REG_ADCRL)
+            #return ((hi << 4) | lo) / 4095.0 * self._vref
+            reading = self.i2c_read12(self.REG_ADCRL, self.REG_ADCRH)
+            return (reading / 4095.0) * self._vref
         else:
             if self._debug:
                 print("Reading IO from pin {}".format(pin))
@@ -604,7 +689,7 @@ class _IO:
 
             return HIGH if pv else LOW
 
-    def output(self, pin, value):
+    def output(self, pin, value, load=True):
         """Write an IO pin state or PWM duty cycle.
 
         :param value: Either True/False for OUT, or a number between 0 and PWM period for PWM.
@@ -615,10 +700,21 @@ class _IO:
         if io_pin.mode == PIN_MODE_PWM:
             if self._debug:
                 print("Outputting PWM to pin: {pin}".format(pin=pin))
-            self.i2c_write8(self.get_pwm_regs(io_pin).pwml, value & 0xFF)
-            self.i2c_write8(self.get_pwm_regs(io_pin).pwmh, value >> 8)
-            self.pwm_load(io_pin.pwm_generator)
 
+            if isinstance(io_pin, DUAL_PWM) and io_pin.is_using_alt():
+                #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwml, value & 0xFF)
+                #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwmh, value >> 8)
+                alt_regs = self.get_alt_pwm_regs(io_pin)
+                self.i2c_write16(alt_regs.pwml, alt_regs.pwmh, value)
+                if load:
+                    self.pwm_load(io_pin.pwm_alt_module)
+            else:
+                #self.i2c_write8(self.get_pwm_regs(io_pin).pwml, value & 0xFF)
+                #self.i2c_write8(self.get_pwm_regs(io_pin).pwmh, value >> 8)
+                regs = self.get_pwm_regs(io_pin)
+                self.i2c_write16(regs.pwml, regs.pwmh, value)
+                if load:
+                    self.pwm_load(io_pin.pwm_module)
         else:
             if value == LOW:
                 if self._debug:
@@ -632,10 +728,19 @@ class _IO:
     def get_pwm_regs(self, pin):
         return PWMRegs(
             piocon=self._regs_piocon[pin.reg_iopwm],
-            pwmcon0=self._regs_pwmcon0[pin.pwm_generator],
-            pwmcon1=self._regs_pwmcon1[pin.pwm_generator],
-            pwml=self._regs_pwml[pin.pwm_generator][pin.pwm_channel],
-            pwmh=self._regs_pwmh[pin.pwm_generator][pin.pwm_channel],
+            pwmcon0=self._regs_pwmcon0[pin.pwm_module],
+            pwmcon1=self._regs_pwmcon1[pin.pwm_module],
+            pwml=self._regs_pwml[pin.pwm_module][pin.pwm_channel],
+            pwmh=self._regs_pwmh[pin.pwm_module][pin.pwm_channel],
+        )
+
+    def get_alt_pwm_regs(self, pin):
+        return PWMRegs(
+            piocon=self._regs_piocon[pin.reg_iopwm],
+            pwmcon0=self._regs_pwmcon0[pin.pwm_alt_module],
+            pwmcon1=self._regs_pwmcon1[pin.pwm_alt_module],
+            pwml=self._regs_pwml[pin.pwm_alt_module][pin.pwm_alt_channel],
+            pwmh=self._regs_pwmh[pin.pwm_alt_module][pin.pwm_alt_channel],
         )
 
     def get_pin_regs(self, pin):
@@ -646,6 +751,22 @@ class _IO:
             ps=self._regs_ps[pin.port],
             int_mask_p=self._regs_int_mask_p[pin.port],
         )
+
+    def switch_pwm_to_alt(self, pin):
+        if pin < 1 or pin > len(self._pins):
+            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
+
+        io_pin = self._pins[pin - 1]
+
+        if not isinstance(io_pin, DUAL_PWM_PIN):
+            raise ValueError("Pin does not have an alternate PWM.")
+
+        auxr = self.i2c_read8(self._regs_auxr[io_pin.reg_auxr])
+        auxr = auxr & ~(0b11 << io_pin.bit_auxr)            # Clear the bits for the alt output
+        auxr = auxr | (io_pin.val_auxr << io_pin.bit_auxr)  # Set the bits for outputting the aux to the intended pin
+
+        self.i2c_write8(self._regs_auxr[io_pin.reg_auxr], auxr)
+        io_pin.set_using_alt(True)
 
 
 class IOE(_IO, ioe_regs.REGS):
@@ -659,18 +780,18 @@ class IOE(_IO, ioe_regs.REGS):
         perform_reset=False
     ):
         self._pins = [
-            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),
-            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(0, 0), enc_map=3),
-            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),
-            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),
-            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),
-            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1), enc_map=7),
-            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_channel=(0, 5), enc_map=8),
-            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3), enc_map=9),
+            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_define=(0, 5), enc_map=1),
+            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_define=(0, 2), enc_map=2),
+            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_define=(0, 0), enc_map=3),
+            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_define=(0, 1), enc_map=4),
+            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_define=(0, 3), enc_map=5),
+            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_define=(0, 4), enc_map=6),
+            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_define=(0, 1), enc_map=7),
+            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_define=(0, 5), enc_map=8),
+            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_define=(0, 3), enc_map=9),
             ADC_PIN(port=3, pin=0, adc_channel=1, enc_map=10),
             ADC_PIN(port=0, pin=6, adc_channel=3, enc_map=11),
-            ADC_OR_PWM_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_channel=(0, 2), enc_map=12),
+            ADC_OR_PWM_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_define=(0, 2), enc_map=12),
             ADC_PIN(port=0, pin=7, adc_channel=2, enc_map=13),
             ADC_PIN(port=1, pin=7, adc_channel=0, enc_map=14),
         ]
@@ -682,6 +803,7 @@ class IOE(_IO, ioe_regs.REGS):
         self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, -1, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1]
+        self._regs_auxr = [-1, REG_AUXR1]
 
         self._regs_pwmcon0 = [self.REG_PWMCON0]
         self._regs_pwmcon1 = [self.REG_PWMCON1]
@@ -719,28 +841,28 @@ class SuperIOE(_IO, sioe_regs.REGS):
             PIN(port=3, pin=6, enc_map=15),
             ADC_PIN(port=0, pin=6, adc_channel=3, enc_map=11),
             ADC_PIN(port=0, pin=7, adc_channel=2, enc_map=13),
-            ADC_OR_PWM_PIN(port=1, pin=7, adc_channel=0, pwm_piocon=(1, 7), pwm_channel=(3, 0)),
-            ADC_OR_PWM_PIN(port=3, pin=0, adc_channel=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=10),
-            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3), enc_map=9),
-            ADC_PIN(port=0, pin=5, adc_channel=4),
+            ADC_OR_PWM_PIN(port=1, pin=7, adc_channel=0, pwm_piocon=(1, 7), pwm_define=(3, 0)),
+            ADC_OR_PWM_PIN(port=3, pin=0, adc_channel=1, pwm_piocon=(2, 4), pwm_define=(2, 1), enc_map=10),
+            ADC_OR_DUAL_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_define=(0, 3), pwm_auxr=(4, 6, 0b11), pwm_alt_define=(2, 1), enc_map=9),
+            ADC_OR_DUAL_PWM_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_define=(0, 2), pwm_auxr=(4, 4, 0b11), pwm_alt_define=(2, 0)),
             ADC_PIN(port=1, pin=3, adc_channel=13, enc_map=0),
             ADC_PIN(port=2, pin=5, adc_channel=15),
-            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1), enc_map=7),
-            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_channel=(0, 5), enc_map=8),
+            ADC_OR_DUAL_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_define=(0, 1), pwm_auxr=(4, 2, 0b11), pwm_alt_define=(1, 1), enc_map=7),
+            ADC_OR_DUAL_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_define=(0, 5), pwm_auxr=(5, 6, 0b11), pwm_alt_define=(3, 1), enc_map=8),
             ADC_PIN(port=2, pin=4, adc_channel=12),
-            ADC_OR_PWM_PIN(port=2, pin=3, adc_channel=11, pwm_piocon=(2, 2), pwm_channel=(1, 0)),
-            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_channel=(0, 0)),                                      # NO ALT
-            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),                           # OR PWM 3 CH 0
-            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),                           # OR PWM 3 CH 1
-            ADC_OR_PWM_PIN(port=1, pin=4, adc_channel=14, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),    # OR PWM 1 CH 1
-            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),                           # OR PWM 2 CH 1
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),                           # OR PWM 2 CH 0
-            ADC_OR_PWM_PIN(port=2, pin=1, adc_channel=9, pwm_piocon=(2, 0), pwm_channel=(2, 0)),                # NO ALT
-            ADC_OR_PWM_PIN(port=2, pin=2, adc_channel=10, pwm_piocon=(2, 1), pwm_channel=(1, 1)),               # NO ALT
-            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(1, 0), enc_map=3),                           # OR PWM 1 CH 0 (default PWM 0 CH 0)
-            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_channel=(3, 0)),                                      # NO ALT
-            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_channel=(3, 1)),                                      # NO ALT
-            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=12),                          # NO ALT
+            ADC_OR_PWM_PIN(port=2, pin=3, adc_channel=11, pwm_piocon=(2, 2), pwm_define=(1, 0)),
+            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_define=(0, 0)),                                                                                       # NO ALT
+            DUAL_PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_define=(0, 4), pwm_auxr=(5, 4, 0b10), pwm_alt_define=(3, 0), enc_map=6),                         # OR PWM 3 CH 0
+            DUAL_PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_define=(0, 5), pwm_auxr=(5, 2, 0b10), pwm_alt_define=(3, 1), enc_map=1),                         # OR PWM 3 CH 1
+            ADC_OR_DUAL_PWM_PIN(port=1, pin=4, adc_channel=14, pwm_piocon=(1, 1), pwm_define=(0, 1), pwm_auxr=(4, 2, 0b10), pwm_alt_define=(1, 1), enc_map=4),  # OR PWM 1 CH 1
+            DUAL_PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_define=(0, 3), pwm_auxr=(4, 6, 0b10), pwm_alt_define=(2, 1), enc_map=5),                         # OR PWM 2 CH 1
+            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_define=(0, 2), pwm_auxr=(4, 4, 0b10), pwm_alt_define=(2, 0), enc_map=2),                              # OR PWM 2 CH 0
+            ADC_OR_PWM_PIN(port=2, pin=1, adc_channel=9, pwm_piocon=(2, 0), pwm_define=(2, 0)),                                                                 # NO ALT
+            ADC_OR_PWM_PIN(port=2, pin=2, adc_channel=10, pwm_piocon=(2, 1), pwm_define=(1, 1)),                                                                # NO ALT
+            DUAL_PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_define=(1, 0), pwm_auxr=(4, 0, 0b10), pwm_alt_define=(0, 0), enc_map=3),                         # OR PWM 1 CH 0 (default PWM 0 CH 0)
+            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_define=(3, 0)),                                      # NO ALT
+            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_define=(3, 1)),                                      # NO ALT
+            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_define=(2, 1), enc_map=12),                          # NO ALT
         ]
 
         self._regs_m1 = [self.REG_P0M1, self.REG_P1M1, self.REG_P2M1, self.REG_P3M1]
@@ -750,6 +872,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, self.REG_INT_MASK_P2, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1, self.REG_PIOCON2]
+        self._regs_auxr = [-1, REG_AUXR1, -1, -1, REG_AUXR4, REG_AUXR5, -1, REG_AUXR7, REG_AUXR8]
 
         self._regs_pwmcon0 = [self.REG_PWM0CON0, self.REG_PWM1CON0, self.REG_PWM2CON0, self.REG_PWM3CON0]
         self._regs_pwmcon1 = [self.REG_PWM0CON1, self.REG_PWM1CON1, self.REG_PWM2CON1, self.REG_PWM3CON1]
@@ -778,8 +901,9 @@ class SuperIOE(_IO, sioe_regs.REGS):
         _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check, perform_reset)
 
         # Mux p1.2 PWM over to PWM 1 Channel 0
-        self.clr_bits(self.REG_AUXR4, 0b11)
-        self.set_bits(self.REG_AUXR4, 0b10)
+        # self.clr_bits(self.REG_AUXR4, 0b11)
+        # self.set_bits(self.REG_AUXR4, 0b10)
+        self.switch_pwm_to_alt(23)
 
     def activate_watchdog(self):
         self.clear_watchdog_timeout()
