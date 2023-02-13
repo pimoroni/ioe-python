@@ -35,12 +35,13 @@ LOW = 0
 
 
 class PIN:
-    def __init__(self, port=None, pin=None):
+    def __init__(self, port=None, pin=None, enc_map=None):
         if getattr(self, "type", None) is None:
             self.type = [PIN_MODE_IO]
         self.mode = None
         self.port = port
         self.pin = pin
+        self.enc_map = enc_map
 
 
 class PWM_PIN(PIN):
@@ -50,8 +51,8 @@ class PWM_PIN(PIN):
 
     """
 
-    def __init__(self, port=None, pin=None, pwm_piocon=None, pwm_channel=None):
-        PIN.__init__(self, port, pin)
+    def __init__(self, port=None, pin=None, pwm_piocon=None, pwm_channel=None, enc_map=None):
+        PIN.__init__(self, port, pin, enc_map)
         self.type.append(PIN_MODE_PWM)
         self.pwm_generator, self.pwm_channel = pwm_channel
         self.reg_iopwm, self.bit_iopwm = pwm_piocon
@@ -64,8 +65,8 @@ class ADC_PIN(PIN):
 
     """
 
-    def __init__(self, port=None, pin=None, adc_channel=None):
-        PIN.__init__(self, port, pin)
+    def __init__(self, port=None, pin=None, adc_channel=None, enc_map=None):
+        PIN.__init__(self, port, pin, enc_map)
         self.type.append(PIN_MODE_ADC)
         self.adc_channel = adc_channel
 
@@ -77,9 +78,9 @@ class ADC_OR_PWM_PIN(ADC_PIN, PWM_PIN):
 
     """
 
-    def __init__(self, port=None, pin=None, adc_channel=None, pwm_piocon=None, pwm_channel=None):
-        ADC_PIN.__init__(self, port, pin, adc_channel)
-        PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_channel)
+    def __init__(self, port=None, pin=None, adc_channel=None, pwm_piocon=None, pwm_channel=None, enc_map=None):
+        ADC_PIN.__init__(self, port, pin, adc_channel, enc_map)
+        PWM_PIN.__init__(self, port, pin, pwm_piocon, pwm_channel, enc_map)
 
 
 class PinRegs:
@@ -205,22 +206,42 @@ class _IO:
 
     def setup_rotary_encoder(self, channel, pin_a, pin_b, pin_c=None, count_microsteps=False):
         """Set up a rotary encoder."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
         channel -= 1
+
+        if pin_a < 1 or pin_a > len(self._pins):
+            raise ValueError("Pin A should be in range 1-{}.".format(len(self._pins)))
+
+        if pin_b < 1 or pin_b > len(self._pins):
+            raise ValueError("Pin B should be in range 1-{}.".format(len(self._pins)))
+
+        mapped_pin_a = self._pins[pin_a - 1].enc_map
+        mapped_pin_b = self._pins[pin_b - 1].enc_map
+        if mapped_pin_a is None:
+            raise ValueError("Pin {} does not support an encoder!".format(pin_a))
+        if mapped_pin_b is None:
+            raise ValueError("Pin {} does not support an encoder!".format(pin_b))
+
         self.set_mode(pin_a, PIN_MODE_PU, schmitt_trigger=True)
         self.set_mode(pin_b, PIN_MODE_PU, schmitt_trigger=True)
         if pin_c is not None:
+            if pin_c < 1 or pin_c > len(self._pins):
+                raise ValueError("Pin C should be in range 1-{}, or None.".format(len(self._pins)))
             self.set_mode(pin_c, PIN_MODE_OD)
             self.output(pin_c, 0)
 
         self.i2c_write8(
             [self.REG_ENC_1_CFG, self.REG_ENC_2_CFG, self.REG_ENC_3_CFG, self.REG_ENC_4_CFG][channel],
-            pin_a | (pin_b << 4),
+            mapped_pin_a | (mapped_pin_b << 4),
         )
         self.change_bit(self.REG_ENC_EN, channel * 2 + 1, count_microsteps)
         self.set_bit(self.REG_ENC_EN, channel * 2)
 
     def read_rotary_encoder(self, channel):
         """Read the step count from a rotary encoder."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
         channel -= 1
         last = self._encoder_last[channel]
         reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
@@ -576,20 +597,20 @@ class IOE(_IO, ioe_regs.REGS):
         skip_chip_id_check=False,
     ):
         self._pins = [
-            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5)),
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2)),
-            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(0, 0)),
-            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1)),
-            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3)),
-            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4)),
-            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1)),
-            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_channel=(0, 5)),
-            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3)),
-            ADC_PIN(port=3, pin=0, adc_channel=1),
-            ADC_PIN(port=0, pin=6, adc_channel=3),
-            ADC_OR_PWM_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_channel=(0, 2)),
-            ADC_PIN(port=0, pin=7, adc_channel=2),
-            ADC_PIN(port=1, pin=7, adc_channel=0),
+            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),
+            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),
+            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(0, 0), enc_map=3),
+            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),
+            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),
+            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),
+            ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1), enc_map=7),
+            ADC_OR_PWM_PIN(port=0, pin=3, adc_channel=6, pwm_piocon=(0, 5), pwm_channel=(0, 5), enc_map=8),
+            ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3), enc_map=9),
+            ADC_PIN(port=3, pin=0, adc_channel=1, enc_map=10),
+            ADC_PIN(port=0, pin=6, adc_channel=3, enc_map=11),
+            ADC_OR_PWM_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_channel=(0, 2), enc_map=12),
+            ADC_PIN(port=0, pin=7, adc_channel=2, enc_map=13),
+            ADC_PIN(port=1, pin=7, adc_channel=0, enc_map=14),
         ]
 
         self._regs_m1 = [self.REG_P0M1, self.REG_P1M1, -1, self.REG_P3M1]
@@ -631,32 +652,32 @@ class SuperIOE(_IO, sioe_regs.REGS):
         skip_chip_id_check=False,
     ):
         self._pins = [
-            PIN(port=3, pin=5),
-            PIN(port=3, pin=6),
-            ADC_PIN(port=0, pin=6, adc_channel=3),
-            ADC_PIN(port=0, pin=7, adc_channel=2),
+            PIN(port=3, pin=5, enc_map=14),
+            PIN(port=3, pin=6, enc_map=15),
+            ADC_PIN(port=0, pin=6, adc_channel=3, enc_map=11),
+            ADC_PIN(port=0, pin=7, adc_channel=2, enc_map=13),
             ADC_PIN(port=1, pin=7, adc_channel=0),
-            ADC_PIN(port=3, pin=0, adc_channel=1),
-            ADC_PIN(port=0, pin=4, adc_channel=5),
+            ADC_PIN(port=3, pin=0, adc_channel=1, enc_map=10),
+            ADC_PIN(port=0, pin=4, adc_channel=5, enc_map=9),
             ADC_PIN(port=0, pin=5, adc_channel=4),
-            ADC_PIN(port=1, pin=3, adc_channel=13),
+            ADC_PIN(port=1, pin=3, adc_channel=13, enc_map=0),
             ADC_PIN(port=2, pin=5, adc_channel=15),
-            ADC_PIN(port=1, pin=1, adc_channel=7),
-            ADC_PIN(port=0, pin=3, adc_channel=6),
+            ADC_PIN(port=1, pin=1, adc_channel=7, enc_map=7),
+            ADC_PIN(port=0, pin=3, adc_channel=6, enc_map=8),
             ADC_PIN(port=2, pin=4, adc_channel=12),
             ADC_PIN(port=2, pin=3, adc_channel=11),
-            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_channel=(0, 0)),  # NO ALT
-            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4)),  # OR PWM 3 CH 0
-            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5)),  # OR PWM 3 CH 1
-            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1)),  # OR PWM 1 CH 1
-            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3)),  # OR PWM 2 CH 1
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2)),  # OR PWM 2 CH 0
-            PWM_PIN(port=2, pin=1, pwm_piocon=(2, 0), pwm_channel=(2, 0)),  # NO ALT
-            PWM_PIN(port=2, pin=2, pwm_piocon=(2, 1), pwm_channel=(1, 1)),  # NO ALT
-            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(1, 0)),  # OR PWM 1 CH 0 (default PWM 0 CH 0)
-            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_channel=(3, 0)),  # NO ALT
-            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_channel=(3, 1)),  # NO ALT
-            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_channel=(2, 1)),  # NO ALT
+            PWM_PIN(port=3, pin=3, pwm_piocon=(2, 6), pwm_channel=(0, 0)),              # NO ALT
+            PWM_PIN(port=0, pin=1, pwm_piocon=(0, 4), pwm_channel=(0, 4), enc_map=6),   # OR PWM 3 CH 0
+            PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),   # OR PWM 3 CH 1
+            PWM_PIN(port=1, pin=4, pwm_piocon=(1, 1), pwm_channel=(0, 1), enc_map=4),   # OR PWM 1 CH 1
+            PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_channel=(0, 3), enc_map=5),   # OR PWM 2 CH 1
+            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_channel=(0, 2), enc_map=2),   # OR PWM 2 CH 0
+            PWM_PIN(port=2, pin=1, pwm_piocon=(2, 0), pwm_channel=(2, 0)),              # NO ALT
+            PWM_PIN(port=2, pin=2, pwm_piocon=(2, 1), pwm_channel=(1, 1)),              # NO ALT
+            PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_channel=(1, 0), enc_map=3),   # OR PWM 1 CH 0 (default PWM 0 CH 0)
+            PWM_PIN(port=3, pin=2, pwm_piocon=(2, 5), pwm_channel=(3, 0)),              # NO ALT
+            PWM_PIN(port=3, pin=4, pwm_piocon=(2, 7), pwm_channel=(3, 1)),              # NO ALT
+            PWM_PIN(port=3, pin=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=12),  # NO ALT
         ]
 
         self._regs_m1 = [self.REG_P0M1, self.REG_P1M1, self.REG_P2M1, self.REG_P3M1]
