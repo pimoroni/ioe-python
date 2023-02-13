@@ -720,7 +720,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
             ADC_OR_PWM_PIN(port=1, pin=7, adc_channel=0, pwm_piocon=(1, 7), pwm_channel=(3, 0)),
             ADC_OR_PWM_PIN(port=3, pin=0, adc_channel=1, pwm_piocon=(2, 4), pwm_channel=(2, 1), enc_map=10),
             ADC_OR_PWM_PIN(port=0, pin=4, adc_channel=5, pwm_piocon=(1, 3), pwm_channel=(0, 3), enc_map=9),
-            ADC_PIN(port=0, pin=5, adc_channel=4, pwm_piocon=(1, 2), pwm_channel=(0, 2)),
+            ADC_PIN(port=0, pin=5, adc_channel=4),
             ADC_PIN(port=1, pin=3, adc_channel=13, enc_map=0),
             ADC_PIN(port=2, pin=5, adc_channel=15),
             ADC_OR_PWM_PIN(port=1, pin=1, adc_channel=7, pwm_piocon=(0, 1), pwm_channel=(0, 1), enc_map=7),
