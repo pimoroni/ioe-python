@@ -656,6 +656,7 @@ class IOE(_IO, ioe_regs.REGS):
         interrupt_pin=None,
         gpio=None,
         skip_chip_id_check=False,
+        perform_reset=False
     ):
         self._pins = [
             PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_channel=(0, 5), enc_map=1),
@@ -700,7 +701,7 @@ class IOE(_IO, ioe_regs.REGS):
         if i2c_addr is None:
             i2c_addr = self.I2C_ADDR
 
-        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check)
+        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check, perform_reset)
 
 
 class SuperIOE(_IO, sioe_regs.REGS):
@@ -711,6 +712,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         interrupt_pin=None,
         gpio=None,
         skip_chip_id_check=False,
+        perform_reset=False
     ):
         self._pins = [
             PIN(port=3, pin=5, enc_map=14),
@@ -773,7 +775,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         if i2c_addr is None:
             i2c_addr = self.I2C_ADDR
 
-        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check)
+        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check, perform_reset)
 
         # Mux p1.2 PWM over to PWM 1 Channel 0
         self.clr_bits(self.REG_AUXR4, 0b11)
