@@ -487,7 +487,7 @@ class _IO:
         period = CLOCK_FREQ // frequency
         divider = 1
 
-        while (period > MAX_PERIOD) and (divider < MAX_DIVIDER)
+        while (period > MAX_PERIOD) and (divider < MAX_DIVIDER):
             period = period >> 1
             divider = divider << 1
 
