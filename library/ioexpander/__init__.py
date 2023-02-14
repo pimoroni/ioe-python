@@ -471,14 +471,20 @@ class _IO:
         """Get the IOE version."""
         return self.i2c_read8(self.REG_VERSION)
 
-    def reset(self):
-        self.set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
+    def _check_reset(self):
+        try:
+            return self.i2c_read8(self.REG_USER_FLASH)
+        except OSError:
+            return 0x00
 
+    def reset(self):
+        t_start = time.time()
+        self.set_bits(self.REG_CTRL, self.MASK_CTRL_RESET)
         # Wait for a register to read its initialised value
-        value = self.i2c_read8(self.REG_USER_FLASH)
-        while value != 0x78:
+        while self._check_reset() != 0x78:
             time.sleep(0.001)
-            value = self.i2c_read8(self.REG_USER_FLASH)
+            if time.time() - t_start >= self._timeout:
+                raise RuntimeError("Timed out waiting for Reset!")
 
     def pwm_load(self, pwm_module=0, wait_for_load=True):
         # Load new period and duty registers into buffer
