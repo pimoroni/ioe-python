@@ -189,7 +189,7 @@ class _IO:
                 self._gpio = GPIO
             self._gpio.setwarnings(False)
             self._gpio.setmode(GPIO.BCM)
-            if interrupt_pu:
+            if interrupt_pull_up:
                 self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             else:
                 self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
@@ -207,10 +207,9 @@ class _IO:
         """Read two (8bit) register from the device, as a single read if they are consecutive."""
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
-            self._i2c_dev.i2c_rdwr(msg_w)
             msg_r = i2c_msg.read(self._i2c_addr, 2)
-            self._i2c_dev.i2c_rdwr(msg_r)
-            return (list(msg_r)[1] << 4) | list(msg_r)[0]
+            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            return list(msg_r)[0] | (list(msg_r)[1] << 4)
         else:
             return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
 
@@ -218,12 +217,11 @@ class _IO:
         """Read two (8bit) register from the device, as a single read if they are consecutive."""
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
-            self._i2c_dev.i2c_rdwr(msg_w)
             msg_r = i2c_msg.read(self._i2c_addr, 2)
-            self._i2c_dev.i2c_rdwr(msg_r)
-            return (list(msg_r)[1] << 8) | list(msg_r)[0]
+            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            return list(msg_r)[0] | (list(msg_r)[1] << 8)
         else:
-            return (self.i2c_read8(reg_h) << 8) | self.i2c_read8(reg_l)
+            return  self.i2c_read8(reg_l) | (self.i2c_read8(reg_h) << 8)
 
     def i2c_write8(self, reg, value):
         """Write a single (8bit) register to the device."""
@@ -238,8 +236,9 @@ class _IO:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
             self._i2c_dev.i2c_rdwr(msg_w)
         else:
-            i2c_write8(reg_l, val_l)
-            i2c_write8(reg_h, val_h)
+            msg_wl = i2c_msg.write(self._i2c_addr, [reg_l, val_l])
+            msg_wh = i2c_msg.write(self._i2c_addr, [reg_h, val_h])
+            self._i2c_dev.i2c_rdwr(msg_wl, msg_wh)
 
     def get_pin(self, pin):
         """Get a pin definition from its index."""
@@ -620,7 +619,7 @@ class _IO:
 
         if mode == PIN_MODE_PWM:
             self.set_bit(self.get_pwm_regs(io_pin).piocon, io_pin.bit_iopwm)
-            if isinstance(io_pin, DUAL_PWM) and io_pin.is_using_alt():
+            if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
                 if io_pin.pwm_module == 0:  # Only module 0's outputs can be inverted
                     self.change_bit(self.REG_PNP, io_pin.bit_iopwm, invert)
                 self.set_bit(self.get_alt_pwm_regs(io_pin).pwmcon0, 7)  # Set PWMRUN bit
@@ -711,7 +710,7 @@ class _IO:
             if self._debug:
                 print("Outputting PWM to pin: {pin}".format(pin=pin))
 
-            if isinstance(io_pin, DUAL_PWM) and io_pin.is_using_alt():
+            if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
                 #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwml, value & 0xFF)
                 #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwmh, value >> 8)
                 alt_regs = self.get_alt_pwm_regs(io_pin)
@@ -963,9 +962,8 @@ class SuperIOE(_IO, sioe_regs.REGS):
             raise ValueError("Count must be greater than zero!")
 
         msg_w = i2c_msg.write(self._i2c_addr, [reg_base])
-        self._i2c_dev.i2c_rdwr(msg_w)
         msg_r = i2c_msg.read(self._i2c_addr, count)
-        self._i2c_dev.i2c_rdwr(msg_r)
+        self._i2c_dev.i2c_rdwr(msg_w, msg_r)
         return list(msg_r)
 
     def read_rotary_encoders(self, start_channel, end_channel):
