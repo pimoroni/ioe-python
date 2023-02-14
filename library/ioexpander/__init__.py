@@ -485,6 +485,20 @@ class _IO:
             if time.time() - t_start >= self._timeout:
                 raise RuntimeError("Timed out waiting for Reset!")
 
+    def get_pwm_module(self, pin):
+        if pin < 1 or pin > len(self._pins):
+            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
+
+        io_pin = self._pins[pin - 1]
+        if PIN_MODE_PWM not in io_pin.type:
+            io_mode = (PIN_MODE_PWM >> 2) & 0b11
+            raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[io_mode]))
+
+        if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
+            if io_pin.is_using_alt():
+                return io_pin.pwm_alt_module
+        return io_pin.pwm_module
+
     def pwm_load(self, pwm_module=0, wait_for_load=True):
         # Load new period and duty registers into buffer
         t_start = time.time()
