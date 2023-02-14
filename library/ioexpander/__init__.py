@@ -85,7 +85,7 @@ class DUAL_PWM_PIN(PWM_PIN):
     def is_using_alt(self):
         return self.using_alt
 
-    def set_using_alt(self, use)
+    def set_using_alt(self, use):
         self.using_alt = use
 
 
@@ -156,6 +156,7 @@ class _IO:
         i2c_addr,
         interrupt_timeout=1.0,
         interrupt_pin=None,
+        interrupt_pull_up=False,
         gpio=None,
         skip_chip_id_check=False,
         perform_reset=False
@@ -188,7 +189,10 @@ class _IO:
                 self._gpio = GPIO
             self._gpio.setwarnings(False)
             self._gpio.setmode(GPIO.BCM)
-            self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+            if interrupt_pu:
+                self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            else:
+                self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
             self.enable_interrupt_out()
 
     def i2c_read8(self, reg):
@@ -201,7 +205,7 @@ class _IO:
 
     def i2c_read12(self, reg_l, reg_h):
         """Read two (8bit) register from the device, as a single read if they are consecutive."""
-        if reg_h = reg_l + 1:
+        if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             self._i2c_dev.i2c_rdwr(msg_w)
             msg_r = i2c_msg.read(self._i2c_addr, 2)
@@ -212,7 +216,7 @@ class _IO:
 
     def i2c_read16(self, reg_l, reg_h):
         """Read two (8bit) register from the device, as a single read if they are consecutive."""
-        if reg_h = reg_l + 1:
+        if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             self._i2c_dev.i2c_rdwr(msg_w)
             msg_r = i2c_msg.read(self._i2c_addr, 2)
@@ -230,7 +234,7 @@ class _IO:
         """Write two (8bit) registers to the device, as a single write if they are consecutive."""
         val_l = value & 0xff
         val_h = (value >> 8) & 0xff
-        if reg_h = reg_l + 1:
+        if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
             self._i2c_dev.i2c_rdwr(msg_w)
         else:
@@ -354,7 +358,7 @@ class _IO:
                     self.i2c_write8(reg, 0b1000 | (bit & 0b111))
         else:
             value = self.i2c_read8(reg)
-            time.sleep(0.001)
+            # time.sleep(0.001)
             self.i2c_write8(reg, value | bits)
 
     def set_bit(self, reg, bit):
@@ -369,7 +373,7 @@ class _IO:
                     self.i2c_write8(reg, 0b0000 | (bit & 0b111))
         else:
             value = self.i2c_read8(reg)
-            time.sleep(0.001)
+            # time.sleep(0.001)
             self.i2c_write8(reg, value & ~bits)
 
     def clr_bit(self, reg, bit):
@@ -775,6 +779,7 @@ class IOE(_IO, ioe_regs.REGS):
         i2c_addr=None,
         interrupt_timeout=1.0,
         interrupt_pin=None,
+        interrupt_pull_up=False,
         gpio=None,
         skip_chip_id_check=False,
         perform_reset=False
@@ -803,7 +808,7 @@ class IOE(_IO, ioe_regs.REGS):
         self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, -1, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1]
-        self._regs_auxr = [-1, REG_AUXR1]
+        self._regs_auxr = [-1, self.REG_AUXR1]
 
         self._regs_pwmcon0 = [self.REG_PWMCON0]
         self._regs_pwmcon1 = [self.REG_PWMCON1]
@@ -823,7 +828,7 @@ class IOE(_IO, ioe_regs.REGS):
         if i2c_addr is None:
             i2c_addr = self.I2C_ADDR
 
-        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check, perform_reset)
+        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, interrupt_pull_up, gpio, skip_chip_id_check, perform_reset)
 
 
 class SuperIOE(_IO, sioe_regs.REGS):
@@ -832,6 +837,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         i2c_addr=None,
         interrupt_timeout=1.0,
         interrupt_pin=None,
+        interrupt_pull_up=False,
         gpio=None,
         skip_chip_id_check=False,
         perform_reset=False
@@ -856,7 +862,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
             DUAL_PWM_PIN(port=1, pin=5, pwm_piocon=(1, 5), pwm_define=(0, 5), pwm_auxr=(5, 2, 0b10), pwm_alt_define=(3, 1), enc_map=1),                         # OR PWM 3 CH 1
             ADC_OR_DUAL_PWM_PIN(port=1, pin=4, adc_channel=14, pwm_piocon=(1, 1), pwm_define=(0, 1), pwm_auxr=(4, 2, 0b10), pwm_alt_define=(1, 1), enc_map=4),  # OR PWM 1 CH 1
             DUAL_PWM_PIN(port=0, pin=0, pwm_piocon=(0, 3), pwm_define=(0, 3), pwm_auxr=(4, 6, 0b10), pwm_alt_define=(2, 1), enc_map=5),                         # OR PWM 2 CH 1
-            PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_define=(0, 2), pwm_auxr=(4, 4, 0b10), pwm_alt_define=(2, 0), enc_map=2),                              # OR PWM 2 CH 0
+            DUAL_PWM_PIN(port=1, pin=0, pwm_piocon=(0, 2), pwm_define=(0, 2), pwm_auxr=(4, 4, 0b10), pwm_alt_define=(2, 0), enc_map=2),                              # OR PWM 2 CH 0
             ADC_OR_PWM_PIN(port=2, pin=1, adc_channel=9, pwm_piocon=(2, 0), pwm_define=(2, 0)),                                                                 # NO ALT
             ADC_OR_PWM_PIN(port=2, pin=2, adc_channel=10, pwm_piocon=(2, 1), pwm_define=(1, 1)),                                                                # NO ALT
             DUAL_PWM_PIN(port=1, pin=2, pwm_piocon=(0, 0), pwm_define=(1, 0), pwm_auxr=(4, 0, 0b10), pwm_alt_define=(0, 0), enc_map=3),                         # OR PWM 1 CH 0 (default PWM 0 CH 0)
@@ -872,7 +878,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         self._regs_int_mask_p = [self.REG_INT_MASK_P0, self.REG_INT_MASK_P1, self.REG_INT_MASK_P2, self.REG_INT_MASK_P3]
 
         self._regs_piocon = [self.REG_PIOCON0, self.REG_PIOCON1, self.REG_PIOCON2]
-        self._regs_auxr = [-1, REG_AUXR1, -1, -1, REG_AUXR4, REG_AUXR5, -1, REG_AUXR7, REG_AUXR8]
+        self._regs_auxr = [-1, self.REG_AUXR1, -1, -1, self.REG_AUXR4, self.REG_AUXR5, -1, self.REG_AUXR7, self.REG_AUXR8]
 
         self._regs_pwmcon0 = [self.REG_PWM0CON0, self.REG_PWM1CON0, self.REG_PWM2CON0, self.REG_PWM3CON0]
         self._regs_pwmcon1 = [self.REG_PWM0CON1, self.REG_PWM1CON1, self.REG_PWM2CON1, self.REG_PWM3CON1]
@@ -898,7 +904,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         if i2c_addr is None:
             i2c_addr = self.I2C_ADDR
 
-        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, gpio, skip_chip_id_check, perform_reset)
+        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, interrupt_pull_up, gpio, skip_chip_id_check, perform_reset)
 
         # Mux p1.2 PWM over to PWM 1 Channel 0
         # self.clr_bits(self.REG_AUXR4, 0b11)
@@ -972,6 +978,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         counts = []
         for channel in range(start_channel, end_channel):
             last = self._encoder_last[channel]
+            value = values[channel - start_channel]
             if value & 0b10000000:
                 value -= 256
 
