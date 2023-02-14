@@ -19,12 +19,12 @@ class REGS:
     BIT_ENC_MICROSTEP_4 = 7
 
     REG_ENC_1_CFG = 0x05
-    REG_ENC_1_COUNT = 0x06
-    REG_ENC_2_CFG = 0x07
-    REG_ENC_2_COUNT = 0x08
-    REG_ENC_3_CFG = 0x09
-    REG_ENC_3_COUNT = 0x0A
-    REG_ENC_4_CFG = 0x0B
+    REG_ENC_2_CFG = 0x06
+    REG_ENC_3_CFG = 0x07
+    REG_ENC_4_CFG = 0x08
+    REG_ENC_1_COUNT = 0x09
+    REG_ENC_2_COUNT = 0x0A
+    REG_ENC_3_COUNT = 0x0B
     REG_ENC_4_COUNT = 0x0C
 
     # Cap touch

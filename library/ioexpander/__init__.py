@@ -944,3 +944,43 @@ class SuperIOE(_IO, sioe_regs.REGS):
         wdt = wdt | wdtdiv  # Set the new WDPS bits according to our divider
 
         self.i2c_write8(self.REG_WDCON, wdt)
+
+    def i2c_multi_read(self, reg_base, count):
+        """Read two (8bit) register from the device, as a single read if they are consecutive."""
+        if count <= 0:
+            raise ValueError("Count must be greater than zero!")
+
+        msg_w = i2c_msg.write(self._i2c_addr, [reg_base])
+        self._i2c_dev.i2c_rdwr(msg_w)
+        msg_r = i2c_msg.read(self._i2c_addr, count)
+        self._i2c_dev.i2c_rdwr(msg_r)
+        return list(msg_r)
+
+    def read_rotary_encoders(self, start_channel, end_channel):
+        """Read the step count from a group of rotary encoders."""
+        if start_channel < 1 or start_channel > 4:
+            raise ValueError("Start Channel should be in range 1-4.")
+
+        if end_channel < start_channel or end_channel > 4:
+            raise ValueError("End Channel should be in range 1-4, and greater or equal to Start Channel.")
+        start_channel -= 1
+        # No need to sub 1 from end_channel, as it would only be added back later
+
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][start_channel]
+        values = self.i2c_multi_read(reg, end_channel - start_channel)
+
+        counts = []
+        for channel in range(start_channel, end_channel):
+            last = self._encoder_last[channel]
+            if value & 0b10000000:
+                value -= 256
+
+            if last > 64 and value < -64:
+                self._encoder_offset[channel] += 256
+            if last < -64 and value > 64:
+                self._encoder_offset[channel] -= 256
+
+            self._encoder_last[channel] = value
+            counts.append(self._encoder_offset[channel] + value)
+
+        return counts
