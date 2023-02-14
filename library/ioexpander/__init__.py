@@ -52,6 +52,13 @@ class PIN:
         self.port = port
         self.pin = pin
         self.enc_channel = enc_channel
+        self.invert_output = False
+
+    def is_inverted(self):
+        return self.invert_output
+
+    def set_inverted(self, invert):
+        self.invert_output = invert
 
 
 class PWM_PIN(PIN):
@@ -664,6 +671,13 @@ class _IO:
         if mode in [PIN_MODE_PU, PIN_MODE_IN]:
             self.change_bit(self.get_pin_regs(io_pin).ps, io_pin.pin, schmitt_trigger)
 
+        # If pin is a bsic output, invert its initial state
+        if mode == PIN_MODE_PP and invert:
+            initial_state = not initial_state
+            io_pin.set_inverted(True)
+        else:
+            io_pin.set_inverted(False)
+
         # 5th bit of mode encodes default output pin state
         self.i2c_write8(self.get_pin_regs(io_pin).p, (initial_state << 3) | io_pin.pin)
 
@@ -741,12 +755,12 @@ class _IO:
         else:
             if value == LOW:
                 if self._debug:
-                    print("Outputting LOW to pin: {pin}".format(pin=pin))
-                self.clr_bit(self.get_pin_regs(io_pin).p, io_pin.pin)
+                    print("Outputting LOW to pin: {pin} (or HIGH if inverted)".format(pin=pin))
+                self.change_bit(self.get_pin_regs(io_pin).p, io_pin.pin, io_pin.is_inverted())
             elif value == HIGH:
                 if self._debug:
-                    print("Outputting HIGH to pin: {pin}".format(pin=pin))
-                self.set_bit(self.get_pin_regs(io_pin).p, io_pin.pin)
+                    print("Outputting HIGH to pin: {pin} (or LOW if inverted)".format(pin=pin))
+                self.change_bit(self.get_pin_regs(io_pin).p, io_pin.pin, not io_pin.is_inverted())
 
     def get_pwm_regs(self, pin):
         return PWMRegs(
