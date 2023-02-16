@@ -11,12 +11,12 @@ __version__ = '0.0.3'
 # These values encode our desired pin function: IO, ADC, PWM
 # alongside the GPIO MODE for that port and pin (section 8.1)
 # the 5th bit additionally encodes the default output state
-PIN_MODE_IO = 0b00000  # General IO mode, IE: not ADC or PWM
-PIN_MODE_QB = 0b00000  # Output, Quasi-Bidirectional mode
-PIN_MODE_PP = 0b00001  # Output, Push-Pull mode
-PIN_MODE_IN = 0b00010  # Input-only (high-impedance)
-PIN_MODE_PU = 0b10000  # Input (with pull-up)
-PIN_MODE_OD = 0b00011  # Output, Open-Drain mode
+PIN_MODE_IO = 0b00000   # General IO mode, IE: not ADC or PWM
+PIN_MODE_QB = 0b00000   # Output, Quasi-Bidirectional mode
+PIN_MODE_PP = 0b00001   # Output, Push-Pull mode
+PIN_MODE_IN = 0b00010   # Input-only (high-impedance)
+PIN_MODE_PU = 0b10000   # Input (with pull-up)
+PIN_MODE_OD = 0b00011   # Output, Open-Drain mode
 PIN_MODE_PWM = 0b00101  # PWM, Output, Push-Pull mode
 PIN_MODE_ADC = 0b01010  # ADC, Input-only (high-impedance)
 MODE_NAMES = ("IO", "PWM", "ADC")
@@ -192,7 +192,6 @@ class _IO:
         if self._interrupt_pin is not None:
             if self._gpio is None:
                 import RPi.GPIO as GPIO
-
                 self._gpio = GPIO
             self._gpio.setwarnings(False)
             self._gpio.setmode(GPIO.BCM)
@@ -211,7 +210,7 @@ class _IO:
         return list(msg_r)[0]
 
     def i2c_read12(self, reg_l, reg_h):
-        """Read two (8bit) register from the device, as a single read if they are consecutive."""
+        """Read two (4+8bit) registers from the device, as a single read if they are consecutive."""
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
@@ -221,7 +220,7 @@ class _IO:
             return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
 
     def i2c_read16(self, reg_l, reg_h):
-        """Read two (8bit) register from the device, as a single read if they are consecutive."""
+        """Read two (8+8bit) registers from the device, as a single read if they are consecutive."""
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
@@ -236,7 +235,7 @@ class _IO:
         self._i2c_dev.i2c_rdwr(msg_w)
 
     def i2c_write16(self, reg_l, reg_h, value):
-        """Write two (8bit) registers to the device, as a single write if they are consecutive."""
+        """Write two (8+8bit) registers to the device, as a single write if they are consecutive."""
         val_l = value & 0xff
         val_h = (value >> 8) & 0xff
         if reg_h == reg_l + 1:
@@ -301,18 +300,12 @@ class _IO:
             raise ValueError("Channel should be in range 1-4.")
         channel -= 1
 
-        if pin_a < 1 or pin_a > len(self._pins):
-            raise ValueError("Pin A should be in range 1-{}.".format(len(self._pins)))
-
-        if pin_b < 1 or pin_b > len(self._pins):
-            raise ValueError("Pin B should be in range 1-{}.".format(len(self._pins)))
-
-        enc_channel_a = self._pins[pin_a - 1].enc_channel
-        enc_channel_b = self._pins[pin_b - 1].enc_channel
+        enc_channel_a = self.get_pin(pin_a).enc_channel
+        enc_channel_b = self.get_pin(pin_b).enc_channel
         if enc_channel_a is None:
-            raise ValueError("Pin {} does not support an encoder!".format(pin_a))
+            raise ValueError("Pin {} does not support an encoder.".format(pin_a))
         if enc_channel_b is None:
-            raise ValueError("Pin {} does not support an encoder!".format(pin_b))
+            raise ValueError("Pin {} does not support an encoder.".format(pin_b))
 
         self.set_mode(pin_a, PIN_MODE_PU, schmitt_trigger=True)
         self.set_mode(pin_b, PIN_MODE_PU, schmitt_trigger=True)
@@ -470,7 +463,6 @@ class _IO:
 
     def get_chip_id(self):
         """Get the IOE chip ID."""
-        #return (self.i2c_read8(self.REG_CHIP_ID_H) << 8) | self.i2c_read8(self.REG_CHIP_ID_L)
         return self.i2c_read16(self.REG_CHIP_ID_L, self.REG_CHIP_ID_H)
 
     def get_version(self):
@@ -575,10 +567,6 @@ class _IO:
         """
         pwmpl = self._regs_pwmpl[pwm_module]
         pwmph = self._regs_pwmph[pwm_module]
-
-        #value &= 0xFFFF
-        #self.i2c_write8(pwmpl, value & 0xFF)
-        #self.i2c_write8(pwmph, value >> 8)
         self.i2c_write16(pwmpl, pwmph, value)
 
         # Commented out, as it gets set when the pin is configured
@@ -714,9 +702,6 @@ class _IO:
                 if time.time() - t_start >= adc_timeout:
                     raise RuntimeError("Timeout waiting for ADC conversion!")
 
-            #hi = self.i2c_read8(self.REG_ADCRH)
-            #lo = self.i2c_read8(self.REG_ADCRL)
-            #return ((hi << 4) | lo) / 4095.0 * self._vref
             reading = self.i2c_read12(self.REG_ADCRL, self.REG_ADCRH)
             return (reading / 4095.0) * self._vref
         else:
@@ -739,15 +724,11 @@ class _IO:
                 print("Outputting PWM to pin: {pin}".format(pin=pin))
 
             if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
-                #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwml, value & 0xFF)
-                #self.i2c_write8(self.get_alt_pwm_regs(io_pin).pwmh, value >> 8)
                 alt_regs = self.get_alt_pwm_regs(io_pin)
                 self.i2c_write16(alt_regs.pwml, alt_regs.pwmh, value)
                 if load:
                     self.pwm_load(io_pin.pwm_alt_module)
             else:
-                #self.i2c_write8(self.get_pwm_regs(io_pin).pwml, value & 0xFF)
-                #self.i2c_write8(self.get_pwm_regs(io_pin).pwmh, value >> 8)
                 regs = self.get_pwm_regs(io_pin)
                 self.i2c_write16(regs.pwml, regs.pwmh, value)
                 if load:
@@ -942,8 +923,6 @@ class SuperIOE(_IO, sioe_regs.REGS):
 
         if is_super_io:
             # Mux p1.2 PWM over to PWM 1 Channel 0
-            # self.clr_bits(self.REG_AUXR4, 0b11)
-            # self.set_bits(self.REG_AUXR4, 0b10)
             self.switch_pwm_to_alt(23)
 
     def activate_watchdog(self):
