@@ -588,7 +588,7 @@ class _IO:
             period = period >> 1
             divider = divider << 1
 
-        period = min(period, MAX_PERIOD)
+        period = int(min(period, MAX_PERIOD))
         self.set_pwm_control(divider, pwm_module)
         self.set_pwm_period(period, pwm_module, load)
 
