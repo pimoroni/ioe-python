@@ -581,14 +581,14 @@ class _IO:
         if frequency <= 0.0:
             raise ValueError("Cannot have a frequency of zero or less.")
 
-        period = CLOCK_FREQ // frequency
+        period = int(CLOCK_FREQ // frequency)
         divider = 1
 
         while (period > MAX_PERIOD) and (divider < MAX_DIVIDER):
             period = period >> 1
             divider = divider << 1
 
-        period = int(min(period, MAX_PERIOD))
+        period = min(period, MAX_PERIOD)
         self.set_pwm_control(divider, pwm_module)
         self.set_pwm_period(period, pwm_module, load)
 
