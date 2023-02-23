@@ -323,7 +323,7 @@ class _IO:
         self.set_bit(self.REG_ENC_EN, channel * 2)
 
         # Reset internal encoder count to zero
-        clear_rotary_encoder(channel + 1)
+        self.clear_rotary_encoder(channel + 1)
 
     def read_rotary_encoder(self, channel):
         """Read the step count from a rotary encoder."""
