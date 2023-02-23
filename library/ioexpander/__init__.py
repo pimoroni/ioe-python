@@ -323,10 +323,7 @@ class _IO:
         self.set_bit(self.REG_ENC_EN, channel * 2)
 
         # Reset internal encoder count to zero
-        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
-        self.i2c_write8(reg, 0)
-        self._encoder_last[channel] = 0
-        self._encoder_offset[channel] = 0
+        clear_rotary_encoder(channel + 1)
 
     def read_rotary_encoder(self, channel):
         """Read the step count from a rotary encoder."""
@@ -348,6 +345,18 @@ class _IO:
         self._encoder_last[channel] = value
 
         return self._encoder_offset[channel] + value
+
+    def clear_rotary_encoder(self, channel):
+        """Clear the rotary encoder count value on a channel to 0."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
+        channel -= 1
+
+        # Reset internal encoder count to zero
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        self.i2c_write8(reg, 0)
+        self._encoder_last[channel] = 0
+        self._encoder_offset[channel] = 0
 
     def set_bits(self, reg, bits):
         """Set the specified bits (using a mask) in a register."""
