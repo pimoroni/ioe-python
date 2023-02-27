@@ -564,7 +564,7 @@ class _IO:
         pwmcon1 = self._regs_pwmcon1[pwm_module]
         self.i2c_write8(pwmcon1, pwmdiv2)
 
-    def set_pwm_period(self, value, pwm_module=0, load=True):
+    def set_pwm_period(self, value, pwm_module=0, load=True, wait_for_load=True):
         """Set the PWM period.
 
         The period is the point at which the PWM counter is reset to zero.
@@ -583,9 +583,9 @@ class _IO:
         # self.set_bit(pwmcon0, 7)  # Set PWMRUN bit
 
         if load:
-            self.pwm_load(pwm_module)
+            self.pwm_load(pwm_module, wait_for_load)
 
-    def set_pwm_frequency(self, frequency, pwm_module=0, load=True):
+    def set_pwm_frequency(self, frequency, pwm_module=0, load=True, wait_for_load=True):
         period = 0
         if frequency <= 0.0:
             raise ValueError("Cannot have a frequency of zero or less.")
@@ -599,7 +599,7 @@ class _IO:
 
         period = min(period, MAX_PERIOD)
         self.set_pwm_control(divider, pwm_module)
-        self.set_pwm_period(period, pwm_module, load)
+        self.set_pwm_period(period, pwm_module, load, wait_for_load)
 
         return period
 
@@ -720,7 +720,7 @@ class _IO:
 
             return HIGH if pv else LOW
 
-    def output(self, pin, value, load=True):
+    def output(self, pin, value, load=True, wait_for_load=True):
         """Write an IO pin state or PWM duty cycle.
 
         :param value: Either True/False for OUT, or a number between 0 and PWM period for PWM.
@@ -736,12 +736,12 @@ class _IO:
                 alt_regs = self.get_alt_pwm_regs(io_pin)
                 self.i2c_write16(alt_regs.pwml, alt_regs.pwmh, value)
                 if load:
-                    self.pwm_load(io_pin.pwm_alt_module)
+                    self.pwm_load(io_pin.pwm_alt_module, wait_for_load)
             else:
                 regs = self.get_pwm_regs(io_pin)
                 self.i2c_write16(regs.pwml, regs.pwmh, value)
                 if load:
-                    self.pwm_load(io_pin.pwm_module)
+                    self.pwm_load(io_pin.pwm_module, wait_for_load)
         else:
             if value == LOW:
                 if self._debug:
