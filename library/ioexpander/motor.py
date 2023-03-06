@@ -155,29 +155,29 @@ class MotorState():
 
 class Motor():
 
-    def __apply_duty(self, duty, mode):
+    def __apply_duty(self, duty, mode, load, wait_for_load):
         if duty is not None:
             signed_level = MotorState.duty_to_level(duty, self.pwm_period)
 
             if mode == SLOW_DECAY:  # aka 'Braking'
                 if signed_level >= 0:
                     self.ioe.output(self.pin_p, self.pwm_period, load=False)
-                    self.ioe.output(self.pin_n, self.pwm_period - signed_level, load=True)
+                    self.ioe.output(self.pin_n, self.pwm_period - signed_level, load=load, wait_for_load=wait_for_load)
                 else:
                     self.ioe.output(self.pin_p, self.pwm_period + signed_level, load=False)
-                    self.ioe.output(self.pin_n, self.pwm_period, load=True)
+                    self.ioe.output(self.pin_n, self.pwm_period, load=load, wait_for_load=wait_for_load)
 
             elif mode == FAST_DECAY:  # aka 'Coasting'
                 if signed_level >= 0:
                     self.ioe.output(self.pin_p, signed_level, load=False)
-                    self.ioe.output(self.pin_n, 0, load=True)
+                    self.ioe.output(self.pin_n, 0, load=load, wait_for_load=wait_for_load)
                 else:
                     self.ioe.output(self.pin_p, 0, load=False)
-                    self.ioe.output(self.pin_n, 0 - signed_level, load=True)
+                    self.ioe.output(self.pin_n, 0 - signed_level, load=load, wait_for_load=wait_for_load)
 
         else:
             self.ioe.output(self.pin_p, 0, load=False)
-            self.ioe.output(self.pin_n, 0, load=True)
+            self.ioe.output(self.pin_n, 0, load=load, wait_for_load=wait_for_load)
 
     def __init__(self, ioe, pins, direction=NORMAL_DIR, speed_scale=MotorState.DEFAULT_SPEED_SCALE, zeropoint=MotorState.DEFAULT_ZEROPOINT,
                  deadzone=MotorState.DEFAULT_DEADZONE, freq=MotorState.DEFAULT_FREQUENCY, mode=MotorState.DEFAULT_DECAY_MODE):
@@ -210,54 +210,54 @@ class Motor():
         ioe.output(self.pin_p, 0, load=False)
         ioe.output(self.pin_n, 0, load=True)
 
-    def enable(self):
-        self.__apply_duty(self.state.enable_with_return(), self.motor_mode)
+    def enable(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.enable_with_return(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def disable(self):
-        self.__apply_duty(self.state.disable_with_return(), self.motor_mode)
+    def disable(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.disable_with_return(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
     def is_enabled(self):
         return self.state.is_enabled()
 
-    def duty(self, duty=None):
+    def duty(self, duty=None, load=True, wait_for_load=False):
         if duty is None:
             return self.state.get_duty()
         else:
-            self.__apply_duty(self.state.set_duty_with_return(duty), self.motor_mode)
+            self.__apply_duty(self.state.set_duty_with_return(duty), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def speed(self, speed=None):
+    def speed(self, speed=None, load=True, wait_for_load=False):
         if speed is None:
             return self.state.get_speed()
         else:
-            self.__apply_duty(self.state.set_speed_with_return(speed), self.motor_mode)
+            self.__apply_duty(self.state.set_speed_with_return(speed), self.motor_mode, loadl=load, wait_for_load=wait_for_load)
 
-    def frequency(self, freq=None):
+    def frequency(self, freq=None, load=True, wait_for_load=False):
         if freq is None:
             return self.pwm_frequency
         else:
             if (freq >= MotorState.MIN_FREQUENCY) and (freq <= MotorState.MAX_FREQUENCY):
                 self.pwm_period = self.ioe.set_pwm_frequency(self.pwm_frequency, self.pin_p_mod, load=False)
-                self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode)
+                self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=load, wait_for_load=wait_for_load)
             else:
                 raise ValueError(f"freq out of range. Expected {MotorState.MIN_FREQUENCY}Hz to {MotorState.MAX_FREQUENCY}Hz")
 
-    def stop(self):
-        self.__apply_duty(self.state.stop_with_return(), self.motor_mode)
+    def stop(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.stop_with_return(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def coast(self):
-        self.__apply_duty(self.state.stop_with_return(), FAST_DECAY)
+    def coast(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.stop_with_return(), FAST_DECAY, load=load, wait_for_load=wait_for_load)
 
-    def brake(self):
-        self.__apply_duty(self.state.stop_with_return(), SLOW_DECAY)
+    def brake(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.stop_with_return(), SLOW_DECAY, load=load, wait_for_load=wait_for_load)
 
-    def full_negative(self):
-        self.__apply_duty(self.state.full_negative_with_return(), self.motor_mode)
+    def full_negative(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.full_negative_with_return(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def full_positive(self):
-        self.__apply_duty(self.state.full_positive_with_return(), self.motor_mode)
+    def full_positive(self, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.full_positive_with_return(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def to_percent(self, input, in_min=MotorState.ZERO_PERCENT, in_max=MotorState.ONEHUNDRED_PERCENT, speed_min=None, speed_max=None):
-        self.__apply_duty(self.state.to_percent_with_return(input, in_min, in_max, speed_min, speed_max), self.motor_mode)
+    def to_percent(self, input, in_min=MotorState.ZERO_PERCENT, in_max=MotorState.ONEHUNDRED_PERCENT, speed_min=None, speed_max=None, load=True, wait_for_load=False):
+        self.__apply_duty(self.state.to_percent_with_return(input, in_min, in_max, speed_min, speed_max), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
     def direction(self, direction=None):
         if direction is None:
@@ -277,15 +277,18 @@ class Motor():
         else:
             self.state.set_zeropoint(zeropoint)
 
-    def deadzone(self, deadzone=None):
+    def deadzone(self, deadzone=None, load=True, wait_for_load=False):
         if deadzone is None:
             return self.state.get_deadzone()
         else:
-            self.__apply_duty(self.state.set_deadzone_with_return(deadzone), self.motor_mode)
+            self.__apply_duty(self.state.set_deadzone_with_return(deadzone), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
-    def decay_mode(self, mode=None):
+    def decay_mode(self, mode=None, load=True, wait_for_load=False):
         if mode is None:
             return self.motor_mode
         else:
             self.motor_mode = mode
-            self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode)
+            self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=True, wait_for_load=wait_for_load)
+
+    def load(self, wait_for_load=False):
+        self.ioe.pwm_load(self.ioe.get_pwm_module(self.pin_p), wait_for_load=wait_for_load)
