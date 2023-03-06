@@ -291,4 +291,4 @@ class Motor():
             self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=True, wait_for_load=wait_for_load)
 
     def load(self, wait_for_load=False):
-        self.ioe.pwm_load(self.ioe.get_pwm_module(self.pin_p), wait_for_load=wait_for_load)
+        self.ioe.pwm_load(self.pin_p_mod, wait_for_load=wait_for_load)

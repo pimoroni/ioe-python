@@ -456,3 +456,6 @@ class Servo():
             return self.state.get_calibration()
         else:
             self.state.set_calibration(calibration)
+
+    def load(self, wait_for_load=False):
+        self.ioe.pwm_load(self.pin_mod, wait_for_load=wait_for_load)
