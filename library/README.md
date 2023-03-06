@@ -38,6 +38,17 @@ In some cases you might need to use `sudo`.
 
 # Changelog
 
+0.0.4
+-----
+
+* Add support for bigger nuvoton chip
+* Add wrappers for controlling motors, servos, and encoders
+
+0.0.3
+-----
+
+* Add support for 7-bit switch/pulse counters
+
 0.0.2
 -----
 
