@@ -33,12 +33,12 @@ This library offers a `Servo` class that uses the Nuvoton's hardware PWM to driv
 
 To start using servos with your expander, you will need to first import the `IOE` and `Servo` classes, then create your `IOE` object.
 ```python
-from ioexpander import IOE  # Or SIOE if the board uses the bigger Nuvoton chip
+from ioexpander import IOE
 from ioexpander.servo import Servo
 
 ioe = IOE()
 ```
-If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SIOE`.
+If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SuperIOE`.
 
 To create your servo, choose which expander pin it will be connected to, and pass that into `Servo`.
 ```python

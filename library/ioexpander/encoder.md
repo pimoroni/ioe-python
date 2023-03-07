@@ -26,10 +26,10 @@ This library offers an `Encoder` class that wraps around the Nuvoton's built-in 
 
 To start using encoders with your expander, you will need to first import the `IOE` and `Encoder` classes, then create your `IOE` object.
 ```python
-from ioexpander import IOE  # Or SIOE if the board uses the bigger Nuvoton chip
+from ioexpander import IOE
 from ioexpander.encoder import Encoder
 ```
-If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SIOE`.
+If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SuperIOE`.
 
 To create your encoder, specify the encoder channel (from `1` to `4`) and expander pins it will be connected to, then pass them into `Encoder`. The example below shows the typical setup for a rotary encoder that has A, B and C pins.
 ```python

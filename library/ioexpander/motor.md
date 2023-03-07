@@ -32,12 +32,12 @@ This library offers a `Motor` class that uses the Nuvoton's hardware PWM to driv
 
 To start using motors with your expander, you will need to first import the `IOE` and `Motor` classes, then create your `IOE` object.
 ```python
-from ioexpander import IOE  # Or SIOE if the board uses the bigger Nuvoton chip
+from ioexpander import IOE
 from ioexpander.motor import Motor
 
 ioe = IOE()
 ```
-If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SIOE`.
+If you are using an expander board that uses the larger Nuvoton chip, then `IOE` should be replaced with `SuperIOE`.
 
 To create your motor, choose which expander pins it will be connected to, and pass that into `Motor`.
 ```python
