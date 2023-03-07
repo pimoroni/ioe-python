@@ -36,8 +36,8 @@ class Encoder():
             raise TypeError("list or tuple must only contain two integers")
 
         self.local_count = 0
-        self.step = 0
-        self.turn = 0
+        self.local_step = 0
+        self.local_turn = 0
         self.last_raw_count = 0
         self.last_delta_count = 0
         self.last_capture_count = 0
@@ -57,16 +57,16 @@ class Encoder():
         self.local_count += raw_change
 
         if raw_change > 0:
-            self.step += raw_change
-            while self.step > self.enc_counts_per_rev:
-                self.step -= self.enc_counts_per_rev
-                self.turn += 1
+            self.local_step += raw_change
+            while self.local_step > self.enc_counts_per_rev:
+                self.local_step -= self.enc_counts_per_rev
+                self.local_turn += 1
 
         elif raw_change < 0:
-            self.step -= raw_change
-            while self.step < 0:
-                self.step += self.enc_counts_per_rev
-                self.turn -= 1
+            self.local_step -= raw_change
+            while self.local_step < 0:
+                self.local_step += self.enc_counts_per_rev
+                self.local_turn -= 1
 
     def count(self):
         self.__take_reading()
@@ -84,19 +84,19 @@ class Encoder():
     def zero(self):
         self.ioe.clear_rotary_encoder(self.channel)
         self.local_count = 0
-        self.step = 0
-        self.turn = 0
+        self.local_step = 0
+        self.local_turn = 0
         self.last_raw_count = 0
         self.last_delta_count = 0
         self.last_capture_count = 0
 
     def step(self):
         self.__take_reading()
-        return self.step
+        return self.local_step
 
     def turn(self):
         self.__take_reading()
-        return self.turn
+        return self.local_turn
 
     def revolutions(self):
         return self.count() / self.enc_counts_per_rev
