@@ -182,7 +182,6 @@ class REGS:
     REG_USER_FLASH = 0xd0
     REG_FLASH_PAGE = 0xf0
 
-
     REG_INT = 0xf9
     MASK_INT_TRIG = 0x1
     MASK_INT_OUT = 0x2
@@ -193,7 +192,6 @@ class REGS:
     REG_INT_MASK_P0 = 0x00
     REG_INT_MASK_P1 = 0x01
     REG_INT_MASK_P3 = 0x03
-
 
     REG_VERSION = 0xfc
     REG_ADDR = 0xfd

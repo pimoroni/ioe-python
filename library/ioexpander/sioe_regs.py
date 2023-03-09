@@ -46,9 +46,7 @@ class REGS:
 
     REG_DEBUG = 0xF8
 
-    REG_P0 = 0x7B # Bit addressing
-
-
+    REG_P0 = 0x7B       # Bit addressing
 
     REG_RWKL = 0x5b
     REG_TCON = 0x55
@@ -59,35 +57,23 @@ class REGS:
     REG_TH1 = 0x4e
     REG_CKCON = 0x4a
     REG_WKCON = 0x5a
-    REG_P1 = 0x7c # Bit addressing
+    REG_P1 = 0x7c       # Bit addressing
 
     REG_CAPCON0 = 0x60
     REG_CAPCON1 = 0x61
     REG_CAPCON2 = 0x62
     REG_CKDIV = 0x47
-    REG_CKSWT = 0x48 # TA protected
-    REG_CKEN = 0x49 # TA protected
+    REG_CKSWT = 0x48    # TA protected
+    REG_CKEN = 0x49     # TA protected
 
-
-
-
-
-
-
-    REG_P2 = 0x7d # Bit addressing
+    REG_P2 = 0x7d       # Bit addressing
     REG_AUXR1 = 0x41
 
-
-
-
-
-
-
-    REG_WDCON = 0x5d # TA protected
+    REG_WDCON = 0x5d    # TA protected
 
     REG_P3M1 = 0x91
     REG_P3M2 = 0x92
-    REG_P3 = 0x7e # Bit addressing
+    REG_P3 = 0x7e       # Bit addressing
     REG_P0M1 = 0x7f
     REG_P0M2 = 0x80
     REG_P1M1 = 0x85
@@ -136,8 +122,8 @@ class REGS:
     REG_SPSR = 0x44
     REG_SPDR = 0x45
     REG_AINDIDS0 = 0x6d
-    REG_PWM0DTEN = 0xaf # TA protected
-    REG_PWM0DTCNT = 0xb0 # TA protected
+    REG_PWM0DTEN = 0xaf   # TA protected
+    REG_PWM0DTCNT = 0xb0  # TA protected
     REG_PWM0MEN = 0xad
     REG_PWM0MD = 0xac
     REG_P3S = 0x95
@@ -219,7 +205,6 @@ class REGS:
     REG_INT_MASK_P1 = 0x01
     REG_INT_MASK_P2 = 0x02
     REG_INT_MASK_P3 = 0x03
-
 
     REG_VERSION = 0xfc
     REG_ADDR = 0xfd

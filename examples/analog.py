@@ -30,4 +30,3 @@ while True:
         last_adc = adc
 
     time.sleep(1.0 / 30)
-

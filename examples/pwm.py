@@ -41,4 +41,3 @@ while True:
     ioe.output(PIN_BLUE, b)
 
     time.sleep(1.0 / 30)
-

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import time
-import colorsys
 import ioexpander as io
 
 
@@ -10,15 +9,15 @@ Press Ctrl+C to exit.
 
 """)
 
-PWM_PINS = list(range(15,27))
+PWM_PINS = list(range(15, 27))
 
 PERIOD = 256
 
 ioe = io.SuperIOE(i2c_addr=0x16)
 
 for pwm in range(4):
-    ioe.set_pwm_period(PERIOD, pwm_generator=pwm)
-    ioe.set_pwm_control(divider=16, pwm_generator=pwm)
+    ioe.set_pwm_period(PERIOD, pwm_module=pwm)
+    ioe.set_pwm_control(divider=16, pwm_module=pwm)
 
 for pin in PWM_PINS:
     ioe.set_mode(pin, io.PWM)

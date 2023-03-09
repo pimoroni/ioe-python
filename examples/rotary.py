@@ -61,4 +61,3 @@ while True:
     print(count, r, g, b)
 
     time.sleep(1.0 / 30)
-

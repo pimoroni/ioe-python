@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import time
 import colorsys
-import ioexpander as io
 from ioexpander.devices import RGBLED
 
 
@@ -29,4 +28,3 @@ if __name__ == "__main__":
         r, g, b = [int(c * 255.0) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
         rgbled.set_rgb(r, g, b)
         time.sleep(1.0 / 30)
-

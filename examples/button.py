@@ -27,4 +27,3 @@ while True:
         last_value = value
 
     time.sleep(1.0 / 30)
-
