@@ -422,7 +422,8 @@ class Servo():
             return self.pwm_frequency
         else:
             if (freq >= ServoState.MIN_FREQUENCY) and (freq <= ServoState.MAX_FREQUENCY):
-                self.pwm_period = self.ioe.set_pwm_frequency(self.pwm_frequency, self.pin_p_mod, load=False)
+                self.pwm_period = self.ioe.set_pwm_frequency(freq, self.pin_p_mod, load=False)
+                self.pwm_frequency = freq
                 if self.state.is_enabled():
                     self.__apply_pulse(self.state.get_deadzoned_duty(), self.motor_mode, load, wait_for_load)
                 elif load:

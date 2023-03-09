@@ -13,8 +13,8 @@ class MotorState():
 
     DEFAULT_DECAY_MODE = SLOW_DECAY  # The standard motor decay behaviour
     DEFAULT_FREQUENCY = 25000.0  # The standard motor update rate
-    MIN_FREQUENCY = 10.0
-    MAX_FREQUENCY = 400000.0
+    MIN_FREQUENCY = 3.0
+    MAX_FREQUENCY = 12000000.0
 
     ZERO_PERCENT = 0.0
     ONEHUNDRED_PERCENT = 1.0
@@ -236,7 +236,8 @@ class Motor():
             return self.pwm_frequency
         else:
             if (freq >= MotorState.MIN_FREQUENCY) and (freq <= MotorState.MAX_FREQUENCY):
-                self.pwm_period = self.ioe.set_pwm_frequency(self.pwm_frequency, self.pin_p_mod, load=False)
+                self.pwm_period = self.ioe.set_pwm_frequency(freq, self.pin_p_mod, load=False)
+                self.pwm_frequency = freq
                 self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=load, wait_for_load=wait_for_load)
             else:
                 raise ValueError(f"freq out of range. Expected {MotorState.MIN_FREQUENCY}Hz to {MotorState.MAX_FREQUENCY}Hz")
@@ -288,7 +289,7 @@ class Motor():
             return self.motor_mode
         else:
             self.motor_mode = mode
-            self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=True, wait_for_load=wait_for_load)
+            self.__apply_duty(self.state.get_deadzoned_duty(), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
     def load(self, wait_for_load=False):
         self.ioe.pwm_load(self.pin_p_mod, wait_for_load=wait_for_load)

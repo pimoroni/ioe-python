@@ -586,20 +586,21 @@ class _IO:
             self.pwm_load(pwm_module, wait_for_load)
 
     def set_pwm_frequency(self, frequency, pwm_module=0, load=True, wait_for_load=True):
-        period = 0
-        if frequency <= 0.0:
-            raise ValueError("Cannot have a frequency of zero or less.")
-
         period = int(CLOCK_FREQ // frequency)
+        if period // 128 > MAX_PERIOD:
+            raise ValueError("The provided frequency is too low")
+        if period < 2:
+            raise ValueError("The provided frequency is too high")
+            
         divider = 1
 
         while (period > MAX_PERIOD) and (divider < MAX_DIVIDER):
             period = period >> 1
             divider = divider << 1
 
-        period = min(period, MAX_PERIOD)
+        period = min(period, MAX_PERIOD)  # Should be unnecessary because of earlier raised errors, but kept in case
         self.set_pwm_control(divider, pwm_module)
-        self.set_pwm_period(period, pwm_module, load, wait_for_load)
+        self.set_pwm_period(period - 1, pwm_module, load, wait_for_load)
 
         return period
 
