@@ -56,14 +56,13 @@ class Encoder():
 
         self.local_count += raw_change
 
+        self.local_step += raw_change
         if raw_change > 0:
-            self.local_step += raw_change
-            while self.local_step > self.enc_counts_per_rev:
+            while self.local_step >= self.enc_counts_per_rev:
                 self.local_step -= self.enc_counts_per_rev
                 self.local_turn += 1
 
         elif raw_change < 0:
-            self.local_step -= raw_change
             while self.local_step < 0:
                 self.local_step += self.enc_counts_per_rev
                 self.local_turn -= 1
