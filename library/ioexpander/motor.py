@@ -229,7 +229,7 @@ class Motor():
         if speed is None:
             return self.state.get_speed()
         else:
-            self.__apply_duty(self.state.set_speed_with_return(speed), self.motor_mode, loadl=load, wait_for_load=wait_for_load)
+            self.__apply_duty(self.state.set_speed_with_return(speed), self.motor_mode, load=load, wait_for_load=wait_for_load)
 
     def frequency(self, freq=None, load=True, wait_for_load=False):
         if freq is None:
