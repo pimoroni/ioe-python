@@ -23,11 +23,12 @@ Capture = namedtuple("Capture", ["count",
 
 
 class Encoder():
-    def __init__(self, ioe, channel, pins, common_pin=None, direction=NORMAL_DIR, counts_per_rev=ROTARY_CPR, count_microsteps=False):
+    def __init__(self, ioe, channel, pins, common_pin=None, direction=NORMAL_DIR, counts_per_rev=ROTARY_CPR, count_microsteps=False, count_divider=1):
         self.ioe = ioe
         self.channel = channel
         self.enc_direction = direction
         self.enc_counts_per_rev = counts_per_rev
+        self.enc_count_divider = count_divider
 
         if not isinstance(pins, list) and not isinstance(pins, tuple):
             raise TypeError("cannot convert object to a list or tuple of pins")
@@ -46,7 +47,7 @@ class Encoder():
 
     def __take_reading(self):
         # Read the current count
-        raw_count = self.ioe.read_rotary_encoder(self.channel)
+        raw_count = self.ioe.read_rotary_encoder(self.channel) // self.enc_count_divider
         raw_change = raw_count - self.last_raw_count
         self.last_raw_count = raw_count
 
