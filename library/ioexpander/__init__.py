@@ -328,39 +328,6 @@ class _IO:
         # Reset internal encoder count to zero
         self.clear_rotary_encoder(channel + 1)
 
-    def read_rotary_encoder(self, channel):
-        """Read the step count from a rotary encoder."""
-        if channel < 1 or channel > 4:
-            raise ValueError("Channel should be in range 1-4.")
-        channel -= 1
-        last = self._encoder_last[channel]
-        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
-        value = self.i2c_read8(reg)
-
-        if value & 0b10000000:
-            value -= 256
-
-        if last > 64 and value < -64:
-            self._encoder_offset[channel] += 256
-        if last < -64 and value > 64:
-            self._encoder_offset[channel] -= 256
-
-        self._encoder_last[channel] = value
-
-        return self._encoder_offset[channel] + value
-
-    def clear_rotary_encoder(self, channel):
-        """Clear the rotary encoder count value on a channel to 0."""
-        if channel < 1 or channel > 4:
-            raise ValueError("Channel should be in range 1-4.")
-        channel -= 1
-
-        # Reset internal encoder count to zero
-        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
-        self.i2c_write8(reg, 0)
-        self._encoder_last[channel] = 0
-        self._encoder_offset[channel] = 0
-
     def set_bits(self, reg, bits):
         """Set the specified bits (using a mask) in a register."""
         if reg in self.BIT_ADDRESSED_REGS:
@@ -857,6 +824,39 @@ class IOE(_IO, ioe_regs.REGS):
 
         _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, interrupt_pull_up, gpio, skip_chip_id_check, perform_reset)
 
+    def read_rotary_encoder(self, channel):
+        """Read the step count from a rotary encoder."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
+        channel -= 1
+        last = self._encoder_last[channel]
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        value = self.i2c_read8(reg)
+
+        if value & 0b10000000:
+            value -= 256
+
+        if last > 64 and value < -64:
+            self._encoder_offset[channel] += 256
+        if last < -64 and value > 64:
+            self._encoder_offset[channel] -= 256
+
+        self._encoder_last[channel] = value
+
+        return self._encoder_offset[channel] + value
+
+    def clear_rotary_encoder(self, channel):
+        """Clear the rotary encoder count value on a channel to 0."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
+        channel -= 1
+
+        # Reset internal encoder count to zero
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        self.i2c_write8(reg, 0)
+        self._encoder_last[channel] = 0
+        self._encoder_offset[channel] = 0
+
 
 class SuperIOE(_IO, sioe_regs.REGS):
     def __init__(
@@ -988,6 +988,39 @@ class SuperIOE(_IO, sioe_regs.REGS):
         self._i2c_dev.i2c_rdwr(msg_w, msg_r)
         return list(msg_r)
 
+    def read_rotary_encoder(self, channel):
+        """Read the step count from a rotary encoder."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
+        channel -= 1
+        last = self._encoder_last[channel]
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        value = self.i2c_read16(reg, reg + 1)
+
+        if value & 0b1000000000000000:
+            value -= 65536
+
+        if last > 16384 and value < -16384:
+            self._encoder_offset[channel] += 65536
+        if last < -16384 and value > 16384:
+            self._encoder_offset[channel] -= 65536
+
+        self._encoder_last[channel] = value
+
+        return self._encoder_offset[channel] + value
+
+    def clear_rotary_encoder(self, channel):
+        """Clear the rotary encoder count value on a channel to 0."""
+        if channel < 1 or channel > 4:
+            raise ValueError("Channel should be in range 1-4.")
+        channel -= 1
+
+        # Reset internal encoder count to zero
+        reg = [self.REG_ENC_1_COUNT, self.REG_ENC_2_COUNT, self.REG_ENC_3_COUNT, self.REG_ENC_4_COUNT][channel]
+        self.i2c_write16(reg, reg + 1, 0)
+        self._encoder_last[channel] = 0
+        self._encoder_offset[channel] = 0
+
     def read_rotary_encoders(self, start_channel, end_channel):
         """Read the step count from a group of rotary encoders."""
         if start_channel < 1 or start_channel > 4:
@@ -1005,13 +1038,13 @@ class SuperIOE(_IO, sioe_regs.REGS):
         for channel in range(start_channel, end_channel):
             last = self._encoder_last[channel]
             value = values[channel - start_channel]
-            if value & 0b10000000:
-                value -= 256
+            if value & 0b1000000000000000:
+                value -= 65536
 
-            if last > 64 and value < -64:
-                self._encoder_offset[channel] += 256
-            if last < -64 and value > 64:
-                self._encoder_offset[channel] -= 256
+            if last > 16384 and value < -16384:
+                self._encoder_offset[channel] += 65536
+            if last < -16384 and value > 16384:
+                self._encoder_offset[channel] -= 65536
 
             self._encoder_last[channel] = value
             counts.append(self._encoder_offset[channel] + value)
