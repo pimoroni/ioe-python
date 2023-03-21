@@ -22,15 +22,15 @@ class REGS:
     REG_ENC_2_CFG = 0x06
     REG_ENC_3_CFG = 0x07
     REG_ENC_4_CFG = 0x08
-    REG_ENC_1_COUNT = 0x09
-    REG_ENC_2_COUNT = 0x0A
-    REG_ENC_3_COUNT = 0x0B
-    REG_ENC_4_COUNT = 0x0C
+    REG_ENC_1_COUNT = 0x0A
+    REG_ENC_2_COUNT = 0x0C
+    REG_ENC_3_COUNT = 0x0E
+    REG_ENC_4_COUNT = 0x10
 
     # Cap touch
-    REG_CAPTOUCH_EN = 0x0D
-    REG_CAPTOUCH_CFG = 0x0E
-    REG_CAPTOUCH_0 = 0x0F  # First of 8 bytes from 15-22
+    #REG_CAPTOUCH_EN = 0x0D
+    #REG_CAPTOUCH_CFG = 0x0E
+    #REG_CAPTOUCH_0 = 0x0F  # First of 8 bytes from 15-22
 
     # Switch counters
     REG_SWITCH_EN_P0 = 0x17
