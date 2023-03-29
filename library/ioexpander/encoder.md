@@ -87,7 +87,7 @@ There are times where an encoder's count (and related values) need to be reset b
 
 There are times with encoders when you want to query multiple pieces of information from a single moment in time. Typically this would be done by reading the values up-front for use later, rather than reading them at the point they are needed in your code. Unfortunately even this offers no guarantee that the values were from a single moment, particularly when dealing with high speed encoders.
 
-To support this usage the encoder class has a `.capture()` function, which requires a sample rate to be provided (e.g. `0.1`) and returns a named tuple containing the encoder's:
+To support this usage the encoder class has a `.capture()` function, which returns a named tuple containing the encoder's:
 ```
 count
 delta
@@ -122,7 +122,7 @@ direction()
 direction(direction)
 counts_per_rev()
 counts_per_rev(counts_per_rev)
-capture(sample_rate)
+capture()
 ```
 
 ### Constants Reference
