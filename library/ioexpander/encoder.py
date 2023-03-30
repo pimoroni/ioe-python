@@ -1,3 +1,4 @@
+import time
 from sys import float_info
 from collections import namedtuple
 from ioexpander.common import NORMAL_DIR, REVERSED_DIR
@@ -42,6 +43,7 @@ class Encoder():
         self.last_raw_count = 0
         self.last_delta_count = 0
         self.last_capture_count = 0
+        self.last_capture_time = time.monotonic_ns()
 
         self.ioe.setup_rotary_encoder(channel, pins[0], pins[1], pin_c=common_pin, count_microsteps=count_microsteps)
 
@@ -89,6 +91,7 @@ class Encoder():
         self.last_raw_count = 0
         self.last_delta_count = 0
         self.last_capture_count = 0
+        self.last_capture_time = time.monotonic_ns()
 
     def step(self):
         self.__take_reading()
@@ -123,17 +126,19 @@ class Encoder():
                 raise ValueError("counts_per_rev out of range. Expected greater than 0.0")
             self.enc_counts_per_rev = counts_per_rev
 
-    def capture(self, sample_rate):
+    def capture(self):
+        capture_time = time.monotonic_ns()
         self.__take_reading()
 
         # Determine the change in counts since the last capture was taken
         change = self.local_count - self.last_capture_count
         self.last_capture_count = self.local_count
 
-        if sample_rate < float_info.epsilon:
-            raise ValueError("sample_rate out of range. Expected greater than 0.0")
+        frequency = 0.0
+        if capture_time > self.last_capture_time:  # Sanity check (shouldn't really happen)
+            frequency = (float(change) * 1000000000) / float(capture_time - self.last_capture_time)
+        self.last_capture_time = capture_time
 
-        frequency = change / sample_rate
         revolutions = self.local_count / self.enc_counts_per_rev
         revolutions_delta = change / self.enc_counts_per_rev
         revolutions_per_second = frequency / self.enc_counts_per_rev
