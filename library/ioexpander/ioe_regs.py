@@ -170,6 +170,7 @@ class REGS:
     REG_SPSR = 0xb4
     REG_SPDR = 0xb5
     REG_AINDIDS0 = 0xb6
+    REG_AINDIDS1 = None # Added to have common code with SuperIO
     REG_EIPH = 0xb7     # Read only
     REG_SCON_1 = 0xb8
     REG_PDTEN = 0xb9    # TA protected
