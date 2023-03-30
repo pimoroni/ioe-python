@@ -175,6 +175,7 @@ class _IO:
         self._i2c_dev = SMBus(1)
         self._debug = False
         self._vref = 3.3
+        self._adc_enabled = False
         self._timeout = interrupt_timeout
         self._interrupt_pin = interrupt_pin
         self._gpio = gpio
@@ -440,6 +441,21 @@ class _IO:
         """Get the ADC voltage reference."""
         return self._vref
 
+    def enable_adc(self):
+        """Enable the analog to digital converter."""
+        if not self._adc_enabled:
+            self.set_bit(self.REG_ADCCON1, 0)
+            self._adc_enabled = True
+
+    def disable_adc(void)
+        """Disable the analog to digital converter."""
+        self.clr_bit(self.REG_ADCCON1, 0)
+        if self.REG_AINDIDS1 is not None:
+            self.i2c_write16(self.REG_AINDIDS0, self.REG_AINDIDS1, 0)
+        else:
+            self.i2c_write8(self.REG_AINDIDS0, 0)
+        self._adc_enabled = False
+
     def get_chip_id(self):
         """Get the IOE chip ID."""
         return self.i2c_read16(self.REG_CHIP_ID_L, self.REG_CHIP_ID_H)
@@ -664,21 +680,26 @@ class _IO:
         if io_pin.mode == PIN_MODE_ADC:
             if self._debug:
                 print("Reading ADC from pin {}".format(pin))
-            self.clr_bits(self.REG_ADCCON0, 0x0F)
-            self.set_bits(self.REG_ADCCON0, io_pin.adc_channel)
+
             if io_pin.adc_channel > 8:
                 self.i2c_write8(self.REG_AINDIDS1, 1 << (io_pin.adc_channel - 8))
             else:
                 self.i2c_write8(self.REG_AINDIDS0, 1 << io_pin.adc_channel)
-            self.set_bit(self.REG_ADCCON1, 0)
 
-            self.clr_bit(self.REG_ADCCON0, 7)  # ADCF - Clear the conversion complete flag
-            self.set_bit(self.REG_ADCCON0, 6)  # ADCS - Set the ADC conversion start flag
+            self.enable_adc()
+
+            con0value = self.i2c_read8(REG_ADCCON0)
+            con0value = con0value & ~0x0f
+            con0value = con0value | io_pin.adc_channel
+
+            con0value = con0value & ~(1 << 7)   # ADCF - Clear the conversion complete flag
+            con0value = con0value | (1 << 6)    # ADCS - Set the ADC conversion start flag
+            self.i2c_write8(REG_ADCCON0, con0value)
 
             # Wait for the ADCF conversion complete flag to be set
             t_start = time.time()
             while not self.get_bit(self.REG_ADCCON0, 7):
-                time.sleep(0.01)
+                time.sleep(0.001)
                 if time.time() - t_start >= adc_timeout:
                     raise RuntimeError("Timeout waiting for ADC conversion!")
 
