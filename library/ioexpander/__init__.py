@@ -209,7 +209,13 @@ class _IO:
         """Read a single (8bit) register from the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg])
         msg_r = i2c_msg.read(self._i2c_addr, 1)
-        self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+        try:
+            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+        except OSError:
+            self._i2c_dev.close()
+            self._i2c_dev.open(1)
+            # Try again
+            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
 
         return list(msg_r)[0]
 
@@ -218,7 +224,13 @@ class _IO:
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
-            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            try:
+                self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            except:
+                self._i2c_dev.close()
+                self._i2c_dev.open(1)
+                # Try again
+                self._i2c_dev.i2c_rdwr(msg_w, msg_r)
             return list(msg_r)[0] | (list(msg_r)[1] << 4)
         else:
             return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
@@ -228,7 +240,13 @@ class _IO:
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
-            self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            try:
+                self._i2c_dev.i2c_rdwr(msg_w, msg_r)
+            except OSError:
+                self._i2c_dev.close()
+                self._i2c_dev.open(1)
+                # Try again
+                self._i2c_dev.i2c_rdwr(msg_w, msg_r)
             return list(msg_r)[0] | (list(msg_r)[1] << 8)
         else:
             return self.i2c_read8(reg_l) | (self.i2c_read8(reg_h) << 8)
@@ -236,7 +254,13 @@ class _IO:
     def i2c_write8(self, reg, value):
         """Write a single (8bit) register to the device."""
         msg_w = i2c_msg.write(self._i2c_addr, [reg, value])
-        self._i2c_dev.i2c_rdwr(msg_w)
+        try:
+            self._i2c_dev.i2c_rdwr(msg_w)
+        except OSError:
+            self._i2c_dev.close()
+            self._i2c_dev.open(1)
+            # Try again
+            self._i2c_dev.i2c_rdwr(msg_w)
 
     def i2c_write16(self, reg_l, reg_h, value):
         """Write two (8+8bit) registers to the device, as a single write if they are consecutive."""
@@ -244,11 +268,23 @@ class _IO:
         val_h = (value >> 8) & 0xff
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
-            self._i2c_dev.i2c_rdwr(msg_w)
+            try:
+                self._i2c_dev.i2c_rdwr(msg_w)
+            except OSError:
+                self._i2c_dev.close()
+                self._i2c_dev.open(1)
+                # Try again
+                self._i2c_dev.i2c_rdwr(msg_w)
         else:
             msg_wl = i2c_msg.write(self._i2c_addr, [reg_l, val_l])
             msg_wh = i2c_msg.write(self._i2c_addr, [reg_h, val_h])
-            self._i2c_dev.i2c_rdwr(msg_wl, msg_wh)
+            try:
+                self._i2c_dev.i2c_rdwr(msg_wl, msg_wh)
+            except OSError:
+                self._i2c_dev.close()
+                self._i2c_dev.open(1)
+                # Try again
+                self._i2c_dev.i2c_rdwr(msg_wl, msg_wh)
 
     def get_pin(self, pin):
         """Get a pin definition from its index."""
