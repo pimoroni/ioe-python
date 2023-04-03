@@ -77,7 +77,7 @@ exclude = [
     'build',
     'dist'
 ]
-line-length = 200
+line-length = 220
 
 [tool.codespell]
 skip = """
