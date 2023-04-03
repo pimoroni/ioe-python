@@ -54,9 +54,13 @@ include = [
     "LICENSE"
 ]
 
-[tool.hatch.build.targets.dist]
+[tool.hatch.build.targets.sdist]
 include = [
-    "/examples"
+    "*"
+]
+exclude = [
+    ".*",
+    "dist"
 ]
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
@@ -90,6 +94,9 @@ skip = """
 ./build,\
 ./dist.\
 """
+
+[tool.isort]
+line_length = 220
 
 [tool.check-manifest]
 ignore = [

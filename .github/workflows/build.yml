@@ -28,7 +28,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          make build-deps
+          make dev-deps
 
       - name: Build Packages
         run: |

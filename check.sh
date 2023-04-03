@@ -3,9 +3,9 @@
 # This script handles some basic QA checks on the source
 
 NOPOST=$1
-LIBRARY_NAME="ioexpander"
-LIBRARY_VERSION=`grep __version__ $LIBRARY_NAME/__init__.py | awk -F" = " '{print substr($2,2,length($2)-2)}' | awk -F "." '{print $1"."$2"."$3}'`
-POST_VERSION=`grep __version__ $LIBRARY_NAME/__init__.py | awk -F" = " '{print substr($2,2,length($2)-2)}' | awk -F "." '{print substr($4,0,length($4))}'`
+LIBRARY_NAME=`hatch project metadata name`
+LIBRARY_VERSION=`hatch version | awk -F "." '{print $1"."$2"."$3}'`
+POST_VERSION=`hatch version | awk -F "." '{print substr($4,0,length($4))}'`
 
 success() {
 	echo -e "$(tput setaf 2)$1$(tput sgr0)"
@@ -36,6 +36,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+inform "Checking $LIBRARY_NAME $LIBRARY_VERSION\n"
 
 inform "Checking for trailing whitespace..."
 grep -IUrn --color "[[:blank:]]$" --exclude-dir=dist --exclude-dir=.tox --exclude-dir=.git --exclude=PKG-INFO

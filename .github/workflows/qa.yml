@@ -21,7 +21,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          make test-deps
+          make dev-deps
 
       - name: Run Quality Assurance
         run: |
