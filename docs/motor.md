@@ -1,32 +1,30 @@
-# Motors with IO Expander<!-- omit in toc -->
+# Motors with IO Expander <!-- omit in toc -->
 
 The Motor library lets you drive DC motors from Nuvoton-based boards such as the [Pimoroni IO Expander Breakout](https://shop.pimoroni.com/products/io-expander) via connected h-bridge drivers.
 
 This library offers a `Motor` class that uses the Nuvoton's hardware PWM to drive a single motor, with support for up to 3 or 6 motors (depending on the chip size).
 
 
-## Table of Content
-- [Motor](#motor)
-  - [Getting Started](#getting-started)
-  - [Control by Speed](#control-by-speed)
-    - [Full Speed](#full-speed)
-    - [Stopping](#stopping)
-    - [Calibration](#calibration)
-  - [Control by Percent](#control-by-percent)
-  - [Control by Duty Cycle](#control-by-duty-cycle)
-    - [Duty Deadzone](#duty-deadzone)
-  - [Frequency Control](#frequency-control)
-  - [Configuration](#configuration)
-    - [Direction](#direction)
-    - [Decay Mode](#decay-mode)
-    - [Driver Type](#driver-type)
-  - [Delayed Loading](#delayed-loading)
-  - [Function Reference](#function-reference)
-  - [Constants Reference](#constants-reference)
-  - [PWM Limitations](#pwm-limitations)
+## Table of Contents <!-- omit in toc -->
+- [Getting Started](#getting-started)
+- [Control by Speed](#control-by-speed)
+  - [Full Speed](#full-speed)
+  - [Stopping](#stopping)
+  - [Calibration](#calibration)
+- [Control by Percent](#control-by-percent)
+- [Control by Duty Cycle](#control-by-duty-cycle)
+  - [Duty Deadzone](#duty-deadzone)
+- [Frequency Control](#frequency-control)
+- [Configuration](#configuration)
+  - [Direction](#direction)
+  - [Decay Mode](#decay-mode)
+- [Delayed Loading](#delayed-loading)
+- [Function Reference](#function-reference)
+- [Constants Reference](#constants-reference)
+- [PWM Limitations](#pwm-limitations)
 
 
-## Motor
+## Motor <!-- omit in toc -->
 
 ### Getting Started
 

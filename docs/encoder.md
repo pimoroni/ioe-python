@@ -5,22 +5,20 @@ The Encoder library provides lets you read incremental rotary encoders from Nuvo
 This library offers an `Encoder` class that wraps around the Nuvoton's built-in encoder support, giving access to additional information useful for motor control. Up to 4 encoders are supported.
 
 
-## Table of Content
-- [Encoder](#encoder)
-  - [Getting Started](#getting-started)
-  - [Count and Angle](#count-and-angle)
-  - [Count Delta](#count-delta)
-  - [Step and Turn](#step-and-turn)
-  - [Changing the Direction](#changing-the-direction)
-  - [Resetting to Zero](#resetting-to-zero)
-  - [Capture](#capture)
-  - [State](#state)
-  - [Function Reference](#function-reference)
-  - [Constants Reference](#constants-reference)
-  - [Pin Limitations](#limitations)
+## Table of Contents <!-- omit in toc -->
+- [Getting Started](#getting-started)
+- [Count and Angle](#count-and-angle)
+- [Count Delta](#count-delta)
+- [Step and Turn](#step-and-turn)
+- [Changing the Direction](#changing-the-direction)
+- [Resetting to Zero](#resetting-to-zero)
+- [Capture](#capture)
+- [Function Reference](#function-reference)
+- [Constants Reference](#constants-reference)
+- [Pin Limitations](#pin-limitations)
 
 
-## Encoder
+## Encoder <!-- omit in toc -->
 
 ### Getting Started
 
