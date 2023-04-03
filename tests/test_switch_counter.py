@@ -15,7 +15,7 @@ def test_read_switch_counter(smbus2, ioe):
 
 def test_clear_switch_counter(smbus2, ioe):
     ioe.clear_switch_counter(1)
-    assert smbus2.SMBus(1).i2c_rdwr.called_once()
+    smbus2.SMBus(1).i2c_rdwr.assert_called_once()
 
 
 def test_switch_counter_invalid_pin(smbus2, ioe):
