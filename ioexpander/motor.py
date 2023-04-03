@@ -1,6 +1,7 @@
 from sys import float_info
+
 from ioexpander import PWM
-from ioexpander.common import clamp, map_float, NORMAL_DIR, REVERSED_DIR
+from ioexpander.common import NORMAL_DIR, REVERSED_DIR, clamp, map_float
 
 FAST_DECAY = 0  # aka 'Coasting'
 SLOW_DECAY = 1  # aka 'Braking'

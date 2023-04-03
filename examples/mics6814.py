@@ -1,7 +1,7 @@
 import time
 from colorsys import hsv_to_rgb
-import ioexpander as io
 
+import ioexpander as io
 
 ioe = io.IOE(i2c_addr=0x19)
 chip_id = ioe.get_chip_id()

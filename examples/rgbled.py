@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import time
 import colorsys
-from ioexpander.devices import RGBLED
+import time
 
+from ioexpander.devices import RGBLED
 
 print("""rgbled.py
 

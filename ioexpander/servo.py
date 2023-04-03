@@ -1,4 +1,5 @@
 from collections import namedtuple
+
 from ioexpander import PWM
 from ioexpander.common import clamp, map_float
 

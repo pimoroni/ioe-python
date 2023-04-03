@@ -1,8 +1,9 @@
 import time
-from sys import float_info
 from collections import namedtuple
-from ioexpander.common import NORMAL_DIR, REVERSED_DIR
 from math import pi
+from sys import float_info
+
+from ioexpander.common import NORMAL_DIR, REVERSED_DIR
 
 MMME_CPR = 12
 ROTARY_CPR = 24

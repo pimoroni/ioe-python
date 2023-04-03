@@ -2,8 +2,7 @@ import time
 
 from smbus2 import SMBus, i2c_msg
 
-from . import sioe_regs
-from . import ioe_regs
+from . import ioe_regs, sioe_regs
 
 __version__ = '0.0.4'
 

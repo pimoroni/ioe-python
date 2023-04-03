@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import time
-import ioexpander as io
 
+import ioexpander as io
 
 print("""superio-all-adc.py
 
