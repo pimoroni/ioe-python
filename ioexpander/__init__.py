@@ -23,7 +23,7 @@ MODE_NAMES = ("IO", "PWM", "ADC")
 GPIO_NAMES = ("QB", "PP", "IN", "OD")
 STATE_NAMES = ("LOW", "HIGH")
 
-# More convinient names for the pin functions
+# More convenient names for the pin functions
 IN = PIN_MODE_IN
 IN_PULL_UP = PIN_MODE_PU
 IN_PU = PIN_MODE_PU

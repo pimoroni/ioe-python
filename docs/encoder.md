@@ -68,7 +68,7 @@ Often you are not interested in the exact count that the encoder is at, but rath
 
 If using a rotary encoder with a physical direction marker, it can be useful to know its position in the form of which step it is at and how many turns have occurred. The current step can be read by calling `.step()`, which returns a value from zero up to the encoder's `counts_per_rev - 1`. The number of turns can be read by calling `.turn()`.
 
-These functions differ from reading the `.count()` or `.revolutions()` by using seperate counters, and so avoid the wrapping issue that these functions experience.
+These functions differ from reading the `.count()` or `.revolutions()` by using separate counters, and so avoid the wrapping issue that these functions experience.
 
 
 ### Changing the Direction
