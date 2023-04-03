@@ -14,6 +14,8 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
     - [Rotary Encoder Decoding](#rotary-encoder-decoding)
     - [Configuring Interrupts](#configuring-interrupts)
 
+<!-- pypa starts reference here -->
+
 ## Pins
 
 All pins are capable as functioning as general purpose inputs and outputs, but may additionally function as a PWM output and/or ADC input.

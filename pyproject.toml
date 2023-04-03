@@ -64,7 +64,8 @@ content-type = "text/markdown"
 fragments = [
   { path = "README.md" },
   { text = "\n" },
-  { path = "REFERENCE.md" },
+  { text = "# Reference" },
+  { path = "REFERENCE.md", start-after = "<!-- pypa starts reference here -->" },  # Remove the TOC, since it doesn't work on PyPi
   { text = "\n" },
   { path = "CHANGELOG.md" }
 ]
