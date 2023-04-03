@@ -32,7 +32,7 @@ def test_adc_input(smbus2):
 
     # Always return the high bit set, this pretends bit 7 of REG_ADCCON0 is set
     # and allows an "ADC read" to complete without a timeout exception.
-    smbus2.i2c_msg.read().__iter__.return_value = [0b10000000]
+    smbus2.i2c_msg.read().__iter__.return_value = [0b10000000, 0b10000000]
 
     result = ioe.input(7)
     assert type(result) is float

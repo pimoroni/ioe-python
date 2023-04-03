@@ -11,6 +11,8 @@ def test_setup(smbus2):
 def test_setup_invalid_chip_id(smbus2):
     from ioexpander import IOE
 
+    smbus2.i2c_msg.read.side_effect = [[0x00, 0x00]]
+
     with pytest.raises(RuntimeError):
         ioe = IOE()
         del ioe
@@ -27,7 +29,7 @@ def test_setup_valid_chip_id(smbus2):
     self._i2c_dev.i2c_rdwr(msg_r)
     return list(msg_r)[0]
     """
-    smbus2.i2c_msg.read.side_effect = [[0xe2], [0x6a]]
+    smbus2.i2c_msg.read.side_effect = [[0x6a, 0xe2]]
 
     ioe = IOE()
     del ioe
