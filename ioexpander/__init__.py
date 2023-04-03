@@ -446,7 +446,7 @@ class _IO:
         self.set_bit(self.REG_ADCCON1, 0)
         self._adc_enabled = True
 
-    def disable_adc(void):
+    def disable_adc(self):
         """Disable the analog to digital converter."""
         self.clr_bit(self.REG_ADCCON1, 0)
         if self.REG_AINDIDS1 is not None:
