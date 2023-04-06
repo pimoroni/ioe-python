@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import time
-import ioexpander as io
 import math
+import time
 
+import ioexpander as io
 
 print("""servo.py
 

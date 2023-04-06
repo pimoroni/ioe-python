@@ -32,7 +32,7 @@ def test_adc_input(smbus2):
 
     # Always return the high bit set, this pretends bit 7 of REG_ADCCON0 is set
     # and allows an "ADC read" to complete without a timeout exception.
-    smbus2.i2c_msg.read().__iter__.return_value = [0b10000000]
+    smbus2.i2c_msg.read().__iter__.return_value = [0b10000000, 0b10000000]
 
     result = ioe.input(7)
     assert type(result) is float
@@ -65,7 +65,7 @@ def test_adc_input_timeout_should_raise_runtimeerror(smbus2):
 
 
 def test_gpio_input(smbus2):
-    from ioexpander import IOE, PIN_MODE_IN, HIGH, LOW
+    from ioexpander import HIGH, IOE, LOW, PIN_MODE_IN
 
     ioe = IOE(skip_chip_id_check=True)
 
@@ -82,7 +82,7 @@ def test_gpio_input(smbus2):
 
 
 def test_gpio_input_pull_up(smbus2):
-    from ioexpander import IOE, PIN_MODE_PU, HIGH, LOW
+    from ioexpander import HIGH, IOE, LOW, PIN_MODE_PU
 
     ioe = IOE(skip_chip_id_check=True)
 

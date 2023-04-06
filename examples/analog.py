@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+
 import ioexpander as io
 
 print("""analog.py
@@ -30,4 +31,3 @@ while True:
         last_adc = adc
 
     time.sleep(1.0 / 30)
-

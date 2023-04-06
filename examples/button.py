@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+
 import ioexpander as io
 
 print("""button.py
@@ -27,4 +28,3 @@ while True:
         last_value = value
 
     time.sleep(1.0 / 30)
-

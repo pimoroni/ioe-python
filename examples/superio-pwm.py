@@ -4,27 +4,31 @@ import time
 
 import ioexpander as io
 
-print("""pwm.py
+print("""superio-pwm.py
 
 Demonstrates running a common-cathode RGB LED, or trio of LEDs wired between each PWM pin and Ground.
 
-You must wire your Red, Green and Blue LEDs or LED elements to pins 1, 3 and 5.
+You must wire your Red, Green and Blue LEDs or LED elements to pins 15, 19 and 23.
 
 Press Ctrl+C to exit.
 
 """)
 
-PIN_RED = 1
-PIN_GREEN = 3
-PIN_BLUE = 5
+PIN_RED = 15
+PIN_GREEN = 19
+PIN_BLUE = 23
 
 BRIGHTNESS = 0.05               # Effectively the maximum fraction of the period that the LED will be on
 PERIOD = int(255 / BRIGHTNESS)  # Add a period large enough to get 0-255 steps at the desired brightness
 
-ioe = io.IOE(i2c_addr=0x18)
+ioe = io.SuperIOE(i2c_addr=0x16)
 
 ioe.set_pwm_period(PERIOD)
 ioe.set_pwm_control(divider=1)  # PWM as fast as we can to avoid LED flicker
+
+# Since pin 23 uses PWM1, we have to set the period/control for PWM1 too
+ioe.set_pwm_period(PERIOD, pwm_generator=1)
+ioe.set_pwm_control(divider=1, pwm_generator=1)
 
 ioe.set_mode(PIN_RED, io.PWM)
 ioe.set_mode(PIN_GREEN, io.PWM)

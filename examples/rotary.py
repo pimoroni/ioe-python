@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-import time
 import colorsys
-import ioexpander as io
+import time
 
+import ioexpander as io
 
 print("""rotary.py
 
@@ -61,4 +61,3 @@ while True:
     print(count, r, g, b)
 
     time.sleep(1.0 / 30)
-

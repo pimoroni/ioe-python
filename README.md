@@ -11,9 +11,19 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 
 ## Where to buy
 
+### HATs
+
+* Weather HAT: https://shop.pimoroni.com/products/weather-hat-only
+* Inventor HAT Mini: https://shop.pimoroni.com/products/inventor-hat-mini
+
+
+### Breakouts
+
 * IO Expander Breakout: https://shop.pimoroni.com/products/io-expander
 * RGB Potentiometer Breakout: https://shop.pimoroni.com/products/rgb-potentiometer-breakout
 * RGB Encoder Breakout: https://shop.pimoroni.com/products/rgb-encoder-breakout
+* MICS6814 3-in-1 Gas Sensor Breakout: https://shop.pimoroni.com/products/mics6814-gas-sensor-breakout
+
 
 # Installing
 

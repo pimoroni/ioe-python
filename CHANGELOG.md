@@ -1,3 +1,11 @@
+# Changelog
+
+0.0.4
+-----
+
+* Add support for bigger nuvoton chip
+* Add wrappers for controlling motors, servos, and encoders
+
 0.0.3
 -----
 

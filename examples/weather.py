@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-import time
 import math
-
+import time
 from threading import Lock
 
 import RPi.GPIO as GPIO
+
 import ioexpander as io
 
 # Anemometer pins
