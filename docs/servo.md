@@ -4,17 +4,20 @@ The Servo library lets you drive 3-pin hobby servo motors from Nuvoton-based boa
 
 This library offers a `Servo` class that uses the Nuvoton's hardware PWM to drive a single servo, with support for up to 6 or 12 servos (depending on the chip size). There is also a `Calibration` class for performing advanced tweaking of each servo's movement behaviour.
 
+
 ## Table of Contents <!-- omit in toc -->
-- [Getting Started](#getting-started)
-- [Control by Value](#control-by-value)
-  - [Common Values](#common-values)
-- [Control by Percent](#control-by-percent)
-- [Control by Pulse Width](#control-by-pulse-width)
-- [Frequency Control](#frequency-control)
-- [Delayed Loading](#delayed-loading)
-- [Function Reference](#function-reference)
-- [PWM Limitations](#pwm-limitations)
-- [Calibration](#calibration)
+- [Servo](#servo)
+  - [Getting Started](#getting-started)
+  - [Control by Value](#control-by-value)
+    - [Common Values](#common-values)
+  - [Control by Percent](#control-by-percent)
+  - [Control by Pulse Width](#control-by-pulse-width)
+  - [Frequency Control](#frequency-control)
+  - [Calibration](#calibration)
+  - [Delayed Loading](#delayed-loading)
+  - [Function Reference](#function-reference)
+  - [PWM Limitations](#pwm-limitations)
+- [Calibration](#calibration-1)
   - [Common Types](#common-types)
   - [Custom Calibration](#custom-calibration)
   - [Modifying a Calibration](#modifying-a-calibration)
@@ -23,7 +26,8 @@ This library offers a `Servo` class that uses the Nuvoton's hardware PWM to driv
   - [Viewing the Mapping](#viewing-the-mapping)
   - [Function Reference](#function-reference-1)
 
-## Servo <!-- omit in toc -->
+
+## Servo
 
 ### Getting Started
 
@@ -113,6 +117,11 @@ To read back the current frequency (in Hz) of the servo, call `.frequency()` wit
 Note that changing the frequency does not change the pulse widths sent to the servos, only how frequently they are sent. This is why `350` is the upper limit, as any higher and the maximum pulse would be longer than the time period. If you encounter any servos where this behaviour is not what they expect, please raise it as a Github issue.
 
 
+### Calibration
+
+There are different types of servos, with `ANGULAR`, `LINEAR`, and `CONTINUOUS` being common. To support these different types, each `Servo` class contains a calibration object that stores the specific value to pulse mapping needed for its type. A copy of a servo's calibration can be accessed using `.calibration()`. It is also possible to provide a servo with a new calibration using `.calibration(calibration)`.
+
+
 ### Delayed Loading
 
 The `Servo` class automatically applies each change to its servo's states immediately. However, sometimes this may not be wanted, and instead you want all servos to receive updated pulses at the same time, regardless of how long the code ran that calculated the update.
@@ -188,13 +197,11 @@ The PWM pinout for the larger IO expander is shown below. Note how some of the P
 | Alt PWM Channel | -  | 0  | 1  | 1  | 1  | 0  | -  | -  | 0  | -  | -  | -  |
 
 
-### Calibration
-
-There are different types of servos, with `ANGULAR`, `LINEAR`, and `CONTINUOUS` being common. To support these different types, each `Servo` class contains a calibration object that stores the specific value to pulse mapping needed for its type. A copy of a servo's calibration can be accessed using `.calibration()`. It is also possible to provide a servo with a new calibration using `.calibration(calibration)`.
+## Calibration
 
 After using servos for a while, you may notice that some don't quite go to the positions you would expect. Or perhaps you are giving values to a continuous rotation servo in degrees when it would make more sense to use a speed or rpm. To compensate for these cases, each `Servo` class has an individual `Calibration` class. This class contains a set of pulse-value pairs that are used by the `.value(value)` functions (and those similar) to convert real-world numbers into pulses each servo understand.
 
-#### Common Types
+### Common Types
 
 There are three common `type`s of servo's supported:
 * `ANGULAR` = `0` - A servo with a value that ranges from -90 to +90 degrees.
@@ -210,7 +217,7 @@ continuous = Servo(ioe, 21, CONTINUOUS)
 ```
 
 
-#### Custom Calibration
+### Custom Calibration
 
 As well as the common types, a custom calibration can also be provided to one or more servos during creation. Below is an example that creates an angular servo that can only travel from -45 degrees to 45 degrees.
 
@@ -224,7 +231,7 @@ This could be useful for example if the servo turning beyond those values would 
 
 
 
-#### Modifying a Calibration
+### Modifying a Calibration
 
 It is also possible to access and modify the calibration of a `Servo` after their creation. This is done by first getting a copy of the servo's calibration using `.calibration()` or `.calibration(servo)`, modifying its pulses or values, then applying the modified calibration back onto to the servo.
 
@@ -239,7 +246,7 @@ wide_angle.calibration(cal)
 ```
 
 
-#### Movement Limits
+### Movement Limits
 
 As well as providing a mapping between pulses and values, the calibration class also limits a servo from going beyond its minimum and maximum values. In some cases this may not be wanted, so the state of the limits can be modified by calling `.limit_to_calibration(lower, upper)` where `lower` and `upper` are booleans. Additionally, the current state of these limits can be queried by calling `.has_lower_limit()` and `.has_upper_limit()`, respectively.
 
@@ -248,7 +255,7 @@ A case where you may want to disable limits is if you want a servo to go to a va
 Note, even with limits disables, servos still have hard limits of `400` and `2600` microsecond pulse widths. These are intended to protect servos from receiving pulses that are too far beyond their expected range. These can vary from servo to servo though, with some hitting a physical end-stop before getting to the typical `500` and `2500` associated with -90 and +90 degrees.
 
 
-#### Populating a Calibration
+### Populating a Calibration
 
 To aid in populating a `Calibration` class, there are five helper functions that fill the class with pulse-value pairs:
 
@@ -263,12 +270,12 @@ Once a `Calibration` class contains pairs (as checked `.size() > 0`), these can 
 For further convenience there are functions for accessing and modifying the `.first()` and `.last()` pair/pulse/value of the calibration.
 
 
-#### Viewing the Mapping
+### Viewing the Mapping
 
 To aid in visualising a calibration's pulse-value mapping, the pulse for any given value can be queried by calling `.value_to_pulse(value)`. Similarly, the value for any given pulse can be queried by calling `.pulse_to_value(pulse)`. These are the same functions used by `Servo` when controlling their servos.
 
 
-#### Function Reference
+### Function Reference
 
 Here is the complete list of functions available on the `Calibration` class:
 

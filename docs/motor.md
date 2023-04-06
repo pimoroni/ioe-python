@@ -6,25 +6,26 @@ This library offers a `Motor` class that uses the Nuvoton's hardware PWM to driv
 
 
 ## Table of Contents <!-- omit in toc -->
-- [Getting Started](#getting-started)
-- [Control by Speed](#control-by-speed)
-  - [Full Speed](#full-speed)
-  - [Stopping](#stopping)
-  - [Calibration](#calibration)
-- [Control by Percent](#control-by-percent)
-- [Control by Duty Cycle](#control-by-duty-cycle)
-  - [Duty Deadzone](#duty-deadzone)
-- [Frequency Control](#frequency-control)
-- [Configuration](#configuration)
-  - [Direction](#direction)
-  - [Decay Mode](#decay-mode)
-- [Delayed Loading](#delayed-loading)
-- [Function Reference](#function-reference)
-- [Constants Reference](#constants-reference)
-- [PWM Limitations](#pwm-limitations)
+- [Motor](#motor)
+  - [Getting Started](#getting-started)
+  - [Control by Speed](#control-by-speed)
+    - [Full Speed](#full-speed)
+    - [Stopping](#stopping)
+    - [Calibration](#calibration)
+  - [Control by Percent](#control-by-percent)
+  - [Control by Duty Cycle](#control-by-duty-cycle)
+    - [Duty Deadzone](#duty-deadzone)
+  - [Frequency Control](#frequency-control)
+  - [Configuration](#configuration)
+    - [Direction](#direction)
+    - [Decay Mode](#decay-mode)
+  - [Delayed Loading](#delayed-loading)
+  - [Function Reference](#function-reference)
+  - [Constants Reference](#constants-reference)
+  - [PWM Limitations](#pwm-limitations)
 
 
-## Motor <!-- omit in toc -->
+## Motor
 
 ### Getting Started
 

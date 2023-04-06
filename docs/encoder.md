@@ -1,24 +1,25 @@
 # Encoders <!-- omit in toc -->
 
-The Encoder library provides lets you read incremental rotary encoders from Nuvoton-based boards such as the [Pimoroni IO Expander Breakout](https://shop.pimoroni.com/products/io-expander).
+The Encoder library lets you read incremental rotary encoders from Nuvoton-based boards such as the [Pimoroni IO Expander Breakout](https://shop.pimoroni.com/products/io-expander).
 
 This library offers an `Encoder` class that wraps around the Nuvoton's built-in encoder support, giving access to additional information useful for motor control. Up to 4 encoders are supported.
 
 
 ## Table of Contents <!-- omit in toc -->
-- [Getting Started](#getting-started)
-- [Count and Angle](#count-and-angle)
-- [Count Delta](#count-delta)
-- [Step and Turn](#step-and-turn)
-- [Changing the Direction](#changing-the-direction)
-- [Resetting to Zero](#resetting-to-zero)
-- [Capture](#capture)
-- [Function Reference](#function-reference)
-- [Constants Reference](#constants-reference)
-- [Pin Limitations](#pin-limitations)
+- [Encoder](#encoder)
+  - [Getting Started](#getting-started)
+  - [Count and Angle](#count-and-angle)
+  - [Count Delta](#count-delta)
+  - [Step and Turn](#step-and-turn)
+  - [Changing the Direction](#changing-the-direction)
+  - [Resetting to Zero](#resetting-to-zero)
+  - [Capture](#capture)
+  - [Function Reference](#function-reference)
+  - [Constants Reference](#constants-reference)
+  - [Pin Limitations](#pin-limitations)
 
 
-## Encoder <!-- omit in toc -->
+## Encoder
 
 ### Getting Started
 
