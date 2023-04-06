@@ -1,17 +1,17 @@
 #!/bin/bash
 LIBRARY_NAME=`grep -m 1 name pyproject.toml | awk -F" = " '{print substr($2,2,length($2)-2)}'`
-LIBRARY_VERSION=`grep __version__ $LIBRARY_NAME/__init__.py | awk -F" = " '{print substr($2,2,length($2)-2)}'`
 CONFIG=/boot/config.txt
 DATESTAMP=`date "+%Y-%m-%d-%H-%M-%S"`
 CONFIG_BACKUP=false
 APT_HAS_UPDATED=false
 RESOURCES_TOP_DIR=$HOME/Pimoroni
 WD=`pwd`
-USAGE="sudo ./install.sh (--unstable)"
+USAGE="./install.sh (--unstable)"
 POSITIONAL_ARGS=()
 FORCE=false
 UNSTABLE=false
 PYTHON="/usr/bin/python3"
+PYDOC="/usr/bin/pydoc3"
 
 
 user_check() {
@@ -60,7 +60,7 @@ function do_config_backup {
 		CONFIG_BACKUP=true
 		FILENAME="config.preinstall-$LIBRARY_NAME-$DATESTAMP.txt"
 		inform "Backing up $CONFIG to /boot/$FILENAME\n"
-		cp $CONFIG /boot/$FILENAME
+		sudo cp $CONFIG /boot/$FILENAME
 		mkdir -p $RESOURCES_TOP_DIR/config-backups/
 		cp $CONFIG $RESOURCES_TOP_DIR/config-backups/$FILENAME
 		if [ -f "$UNINSTALLER" ]; then
@@ -90,7 +90,7 @@ function apt_pkg_install {
 		fi
 		sudo apt install -y $PACKAGES
 		if [ -f "$UNINSTALLER" ]; then
-			echo "apt uninstall -y $PACKAGES"
+			echo "apt uninstall -y $PACKAGES" >> $UNINSTALLER
 		fi
 	fi
 }
@@ -131,7 +131,7 @@ fi
 
 PYTHON_VER=`$PYTHON --version`
 
-printf "$LIBRARY_NAME ($LIBRARY_VERSION) Python Library: Installer\n\n"
+printf "$LIBRARY_NAME Python Library: Installer\n\n"
 
 inform "Checking Dependencies. Please wait..."
 
@@ -161,6 +161,13 @@ eval $CONFIG_VARS
 
 RESOURCES_DIR=$RESOURCES_TOP_DIR/$LIBRARY_NAME
 UNINSTALLER=$RESOURCES_DIR/uninstall.sh
+
+RES_DIR_OWNER=`stat -c "%U" $RESOURCES_TOP_DIR`
+
+if [[ "$RES_DIR_OWNER" == "root" ]]; then
+	warning "\n\nFixing $RESOURCES_TOP_DIR permissions!\n\n"
+	sudo chown -R $USER:$USER $RESOURCES_TOP_DIR
+fi
 
 mkdir -p $RESOURCES_DIR
 
@@ -205,9 +212,9 @@ for ((i = 0; i < ${#CONFIG_TXT[@]}; i++)); do
 	if ! [ "$CONFIG_LINE" == "" ]; then
 		do_config_backup
 		inform "Adding $CONFIG_LINE to $CONFIG\n"
-		sed -i "s/^#$CONFIG_LINE/$CONFIG_LINE/" $CONFIG
+		sudo sed -i "s/^#$CONFIG_LINE/$CONFIG_LINE/" $CONFIG
 		if ! grep -q "^$CONFIG_LINE" $CONFIG; then
-			printf "$CONFIG_LINE\n" >> $CONFIG
+			printf "$CONFIG_LINE\n" | sudo tee --append $CONFIG
 		fi
 	fi
 done
@@ -223,9 +230,9 @@ fi
 
 printf "\n"
 
-if [ -f "/usr/bin/pydoc" ]; then
+if [ -f "$PYDOC" ]; then
 	printf "Generating documentation.\n"
-	pydoc -w $LIBRARY_NAME > /dev/null
+	$PYDOC -w $LIBRARY_NAME > /dev/null
 	if [ -f "$LIBRARY_NAME.html" ]; then
 		cp $LIBRARY_NAME.html $RESOURCES_DIR/docs.html
 		rm -f $LIBRARY_NAME.html
