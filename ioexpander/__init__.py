@@ -981,14 +981,14 @@ class SuperIOE(_IO, sioe_regs.REGS):
     def set_watchdog_control(self, divider):
         try:
             wdtdiv = {
-                1: 0b000,
-                2: 0b001,
-                4: 0b010,
-                8: 0b011,
-                16: 0b100,
-                32: 0b101,
-                64: 0b110,
-                128: 0b111,
+                1: 0b000,    # 6.4ms
+                4: 0b001,    # 25.6ms
+                8: 0b010,    # 51.2ms
+                16: 0b011,   # 102.4ms
+                32: 0b100,   # 204.8ms
+                64: 0b101,   # 409.6ms
+                128: 0b110,  # 819.2ms
+                256: 0b111,  # 1.638s
             }[divider]
         except KeyError:
             raise ValueError("A clock divider of {}".format(divider))
