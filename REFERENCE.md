@@ -4,6 +4,8 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
 
 - [Pimoroni IO Expander](#pimoroni-io-expander)
   - [Pins](#pins)
+    - [IO Expander](#io-expander)
+    - [Super IO Expander](#super-io-expander)
   - [Functions](#functions)
     - [General-purpose IO](#general-purpose-io)
       - [High-impedance input](#high-impedance-input)
@@ -12,37 +14,82 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
     - [Analog Inputs (ADC)](#analog-inputs-adc)
     - [Pulse Width Modulation Outputs (PWM)](#pulse-width-modulation-outputs-pwm)
     - [Rotary Encoder Decoding](#rotary-encoder-decoding)
+      - [Super IO Changes](#super-io-changes)
     - [Configuring Interrupts](#configuring-interrupts)
 
 <!-- pypa starts reference here -->
 
 ## Pins
 
-All pins are capable as functioning as general purpose inputs and outputs, but may additionally function as a PWM output and/or ADC input.
+### IO Expander
 
-1. P1.5 - PWM
-2. P1.0 - PWM
-3. P1.2 - PWM
-4. P1.4 - PWM
-5. P0.0 - PWM
-6. P0.1 - PWM
-7. P1.1 - ADC or PWM
-8. P0.3 - ADC or PWM
-9. P0.4 - ADC or PWM
-10. P3.0 - ADC
-11. P0.6 - ADC
-12. P0.5 - ADC or PWM
-13. P0.7 - ADC
-14. P1.7 - ADC
+All pins are capable as functioning as general purpose inputs and outputs, and reading rotary encoders, but may additionally function as a PWM output and/or ADC input.
+
+| #  | Port | ADC    | PWM    | Encoder |
+|----|------|--------|--------|---------|
+| 1  | P1.5 |        | [Ch 5] | Ch 1    |
+| 2  | P1.0 |        | [Ch 2] | Ch 2    |
+| 3  | P1.2 |        | [Ch 0] | Ch 3    |
+| 4  | P1.4 |        | [Ch 1] | Ch 4    |
+| 5  | P0.0 |        | [Ch 3] | Ch 5    |
+| 6  | P0.1 |        | [Ch 4] | Ch 6    |
+| 7  | P1.1 | [Ch 7] |  Ch 1  | Ch 7    |
+| 8  | P0.3 | [Ch 6] |  Ch 5  | Ch 8    |
+| 9  | P0.4 | [Ch 5] |  Ch 3  | Ch 9    |
+| 10 | P3.0 | [Ch 1] |        | Ch 10   |
+| 11 | P0.6 | [Ch 3] |        | Ch 11   |
+| 12 | P0.5 | [Ch 4] |  Ch 2  | Ch 12   |
+| 13 | P0.7 | [Ch 2] |        | Ch 13   |
+| 14 | P1.7 | [Ch 0] |        | Ch 14   |
+
+[ ] = labelled pin functions
+
+
+### Super IO Expander
+
+| #   | Port |   ADC   |     PWM      |   Alt PWM    |  Encoder  |
+|-----|------|---------|--------------|--------------|-----------|
+| [1] | P3.5 |         |              |              | Ch 14     |
+| [2] | P3.6 |         |              |              | Ch 15     |
+| 3   | P0.6 | [Ch 3]  |              |              | Ch 11     |
+| 4   | P0.7 | [Ch 2]  |              |              | Ch 13     |
+| 5   | P1.7 | [Ch 0]  |  Mod 3 Ch 0  |              |           |
+| 6   | P3.0 | [Ch 1]  |  Mod 2 Ch 1  |              | Ch 10     |
+| 7   | P0.4 | [Ch 5]  |  Mod 0 Ch 3  |  Mod 2 Ch 1  | Ch 9      |
+| 8   | P0.5 | [Ch 4]  |  Mod 0 Ch 2  |  Mod 2 Ch 0  |           |
+| 9   | P1.3 | [Ch 13] |              |              | Ch 0      |
+| 10  | P2.5 | [Ch 15] |              |              |           |
+| 11  | P1.1 | [Ch 7]  |  Mod 0 Ch 1  |  Mod 1 Ch 1  |           |
+| 12  | P0.3 | [Ch 6]  |  Mod 0 Ch 5  |  Mod 3 Ch 1  | Ch 8      |
+| 13  | P2.4 | [Ch 12] |              |              | Ch 7      |
+| 14  | P2.3 | [Ch 11] |  Mod 1 Ch 0  |              | Ch 6      |
+| 15  | P3.3 |         | [Mod 0 Ch 0] |              |           |
+| 16  | P0.1 |         | [Mod 0 Ch 4] |  Mod 3 Ch 0  |           |
+| 17  | P1.5 |         | [Mod 0 Ch 5] |  Mod 3 Ch 1  | Ch 1      |
+| 18  | P1.4 |  Ch 14  | [Mod 0 Ch 1] |  Mod 1 Ch 1  | Ch 4      |
+| 19  | P0.0 |         | [Mod 0 Ch 3] |  Mod 2 Ch 1  | Ch 5      |
+| 20  | P1.0 |         | [Mod 0 Ch 2] |  Mod 2 Ch 0  | Ch 2      |
+| 21  | P2.1 |  Ch 9   | [Mod 2 Ch 0] |              |           |
+| 22  | P2.2 |  Ch 10  | [Mod 1 Ch 1] |              |           |
+| 23  | P1.2 |         |  Mod 0 Ch 0  | [Mod 1 Ch 0] | Ch 3      |
+| 24  | P3.2 |         | [Mod 3 Ch 0] |              |           |
+| 25  | P3.4 |         | [Mod 3 Ch 1] |              |           |
+| 26  | P3.1 |         | [Mod 2 Ch 1] |              | Ch 12     |
+
+[ ] = labelled pin functions
 
 ## Functions
 
-In all cases you will need to create an instance of the `IOE` class to manage your IO expander:
+In all cases you will need to create an instance of the `IOE` class to manage your IO expander (or the `SuperIOE` if using a Super IO Expander board):
 
 ```python
 import ioexpander
 
+# For IO Expander boards
 ioe = ioexpander.IOE()
+
+# For Super IO Expander boards
+ioe = ioexpander.SuperIOE()
 ```
 
 ### General-purpose IO
@@ -202,7 +249,7 @@ POT_ENC_C = 11
 ioe.setup_rotary_encoder(ENC_CHANNEL, POT_ENC_A, POT_ENC_B, pin_c=POT_ENC_C)
 ```
 
-Each encoder channel has its own signed, 8bit count register which stores the continuous count of pulses as the encoder is rotated. This register is not reset between reads, and will overflow from 128 to -127 in one direction, and from 128 to -127 in the other.
+Each encoder channel has its own signed, 8bit count register which stores the continuous count of pulses as the encoder is rotated. This register is not reset between reads, and will overflow from 127 to -128 in one direction, and from -128 to 127 in the other.
 
 In order to maintain a count across reads, this overflow event should be used to increment/decrement an offset which is then added to the register value. This is all done inside the IO Expander library, so you can simply read a continuous value using:
 
@@ -222,6 +269,10 @@ while True:
 ```
 
 Note: in order to track overflows you will need to ensure this interrupt code can run fast enough to catch them. In most cases - ie: a person turning a dial with a 24 step resolution - even 1-second intervals are fine, but for decoding a motor you will want to sample much faster. For example a motor running at 20k RPM with a 12 step resolution would need to be sampled around 31 times a second or approximately every 30ms.
+
+#### Super IO Changes
+
+On the Super IO Expander, encoder counting has been increased to 16 bit to remove the note above of requiring that motor encoders be read every 30ms to avoid an overflow. An overflow will still occur but now from 32767 to -32768 in one direction, and from -32768 to 32767 in the other.
 
 ### Configuring Interrupts
 
