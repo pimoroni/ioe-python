@@ -74,7 +74,7 @@ All pins are capable as functioning as general purpose inputs and outputs, and r
 | 23  | P1.2 |         |  Mod 0 Ch 0  | [Mod 1 Ch 0] | Ch 3      |
 | 24  | P3.2 |         | [Mod 3 Ch 0] |              |           |
 | 25  | P3.4 |         | [Mod 3 Ch 1] |              |           |
-| 26  | P3.1 |         | [Mod 2 Ch 1] |              | Ch 12     |      
+| 26  | P3.1 |         | [Mod 2 Ch 1] |              | Ch 12     |
 
 [ ] = labelled pin functions
 
