@@ -4,7 +4,7 @@ from smbus2 import SMBus, i2c_msg
 
 from . import ioe_regs, sioe_regs
 
-__version__ = '0.0.4'
+__version__ = '0.0.5'
 
 
 # These values encode our desired pin function: IO, ADC, PWM

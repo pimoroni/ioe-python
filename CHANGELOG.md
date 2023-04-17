@@ -1,5 +1,11 @@
 # Changelog
 
+0.0.5
+-----
+
+* Improved readme and documentation
+* Linting fixes
+
 0.0.4
 -----
 
