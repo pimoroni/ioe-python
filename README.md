@@ -63,7 +63,7 @@ You may need to reboot after enabling I2C for the change to take effect.
 
 # Examples and Usage
 
-There are various examples to get you started with your IO Expander. With the library installed on your Raspberry Pi, these can be found in the `~/Pimoroni/inventorhatmini/examples` directory.
+There are various examples to get you started with your IO Expander. With the library installed on your Raspberry Pi, these can be found in the `~/Pimoroni/pimoroni-ioexpander/examples` directory.
 
 To take IO Expander further, the full API is described in the [library reference](/REFERENCE.md), with additional feature specific information found in the [docs folder](/docs).
 
@@ -72,9 +72,9 @@ To take IO Expander further, the full API is described in the [library reference
 
 To uninstall the library only (keeping all examples):
 
-* Just run `python3 -m pip uninstall inventorhatmini`
+* Just run `python3 -m pip uninstall pimoroni-ioexpander`
 
 Or if you have grabbed the library from Github:
 
-* `cd inventorhatmini-python`
+* `cd ioe-python`
 * `./uninstall.sh`
