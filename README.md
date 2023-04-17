@@ -25,22 +25,56 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 * MICS6814 3-in-1 Gas Sensor Breakout: https://shop.pimoroni.com/products/mics6814-gas-sensor-breakout
 
 
-# Installing
+# Getting the Library
 
-Stable library and dependencies from GitHub:
+**Stable library only (no examples) from PyPi:**
+
+* Just run `python3 -m pip install pimoroni-ioexpander`
+
+In some cases you may need to install pip with: `sudo apt install python3-pip`
+
+**Stable library, with latest examples from GitHub:**
 
 * `git clone https://github.com/pimoroni/ioe-python`
 * `cd ioe-python`
-* `sudo ./install.sh`
+* `./install.sh`
 
-Latest/development library and dependencies from GitHub:
+**Latest/development library and examples from GitHub:**
 
 * `git clone https://github.com/pimoroni/ioe-python`
 * `cd ioe-python`
-* `sudo ./install.sh --unstable`
+* `./install.sh --unstable`
 
-Stable (library only) from PyPi:
 
-* Just run `pip3 install pimoroni-ioexpander`
+# Configuring your Raspberry Pi
 
-In some cases you might need to use `sudo`.
+## Enable I2C
+
+In order to use the IO Expander, you need to enable the I2C interface of your Raspberry Pi. This can be done in the terminal by running:
+
+* `sudo raspi-config nonint do_i2c 0`
+
+Alternatively, you can enable the I2C interface by:
+* running `sudo raspi-config` and enabling the option under **Interfacing Options**.
+* opening the graphical **Raspberry Pi Configuration** application from the **Preferences** menu.
+
+You may need to reboot after enabling I2C for the change to take effect.
+
+
+# Examples and Usage
+
+There are various examples to get you started with your IO Expander. With the library installed on your Raspberry Pi, these can be found in the `~/Pimoroni/pimoroni-ioexpander/examples` directory.
+
+To take IO Expander further, the full API is described in the [library reference](/REFERENCE.md), with additional feature specific information found in the [docs folder](/docs).
+
+
+# Removing the Library
+
+To uninstall the library only (keeping all examples):
+
+* Just run `python3 -m pip uninstall pimoroni-ioexpander`
+
+Or if you have grabbed the library from Github:
+
+* `cd ioe-python`
+* `./uninstall.sh`
