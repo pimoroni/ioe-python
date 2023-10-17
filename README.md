@@ -60,6 +60,9 @@ Alternatively, you can enable the I2C interface by:
 
 You may need to reboot after enabling I2C for the change to take effect.
 
+## Note for Raspberry Pi 1
+
+The first version of the Pi uses SMBus 0 instead of 1. The ioe-python library uses SMBus 1 by default. You can change this by adding `smbusnr=0` to your calls to `io.IOE(...)`. If you want your code to run on multiple versions without changes, the `Revision` part of `/proc/cpuinfo` shows the CPU revision. Revisions `0002` and `0003` use SMBus 0.
 
 # Examples and Usage
 
