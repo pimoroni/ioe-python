@@ -240,8 +240,8 @@ class _IO:
 
     def i2c_write16(self, reg_l, reg_h, value):
         """Write two (8+8bit) registers to the device, as a single write if they are consecutive."""
-        val_l = value & 0xff
-        val_h = (value >> 8) & 0xff
+        val_l = value & 0xFF
+        val_h = (value >> 8) & 0xFF
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
             self._i2c_dev.i2c_rdwr(msg_w)
@@ -285,7 +285,7 @@ class _IO:
 
         # The switch counter is 7-bit
         # The most significant bit encodes the current GPIO state
-        return value & 0x7f, value & 0x80 == 0x80
+        return value & 0x7F, value & 0x80 == 0x80
 
     def clear_switch_counter(self, pin):
         """Clear the switch count value on a pin to 0."""
@@ -689,7 +689,7 @@ class _IO:
                 self.i2c_write8(self.REG_AINDIDS0, 1 << io_pin.adc_channel)
 
             con0value = self.i2c_read8(self.REG_ADCCON0)
-            con0value = con0value & ~0x0f
+            con0value = con0value & ~0x0F
             con0value = con0value | io_pin.adc_channel
 
             con0value = con0value & ~(1 << 7)   # ADCF - Clear the conversion complete flag

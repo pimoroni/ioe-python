@@ -29,7 +29,7 @@ def test_setup_valid_chip_id(smbus2):
     self._i2c_dev.i2c_rdwr(msg_r)
     return list(msg_r)[0]
     """
-    smbus2.i2c_msg.read.side_effect = [[0x6a, 0xe2]]
+    smbus2.i2c_msg.read.side_effect = [[0x6A, 0xE2]]
 
     ioe = IOE()
     del ioe
