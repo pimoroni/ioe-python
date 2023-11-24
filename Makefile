@@ -54,7 +54,7 @@ clean:
 	-rm -r dist
 
 testdeploy: build
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --repository testpypi dist/*
 
 deploy: nopost build
 	twine upload dist/*
