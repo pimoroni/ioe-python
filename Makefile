@@ -30,10 +30,13 @@ uninstall:
 
 dev-deps:
 	python3 -m pip install -r requirements-dev.txt
-	sudo apt install dos2unix
+	sudo apt install dos2unix shellcheck
 
 check:
 	@bash check.sh
+
+shellcheck:
+	shellcheck *.sh
 
 qa:
 	tox -e qa
@@ -54,7 +57,7 @@ clean:
 	-rm -r dist
 
 testdeploy: build
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --repository testpypi dist/*
 
 deploy: nopost build
 	twine upload dist/*

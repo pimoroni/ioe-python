@@ -35,7 +35,7 @@ def test_adc_input(smbus2):
     smbus2.i2c_msg.read().__iter__.return_value = [0b10000000, 0b10000000]
 
     result = ioe.input(7)
-    assert type(result) is float
+    assert isinstance(result, float)
 
     # (128 << 4) | 128 / 4095.0 * 3.3
     # round to 2dp to account for FLOATING POINT WEIRDNESS!
