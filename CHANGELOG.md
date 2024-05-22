@@ -1,5 +1,12 @@
 # Changelog
 
+1.0.0
+-----
+
+* Add dependency on smbus2
+* Add support for alternate i2c bus number
+* Port to hatch/pyproject.toml
+
 0.0.5
 -----
 
