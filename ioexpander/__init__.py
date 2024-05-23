@@ -4,7 +4,7 @@ from smbus2 import SMBus, i2c_msg
 
 from . import ioe_regs, sioe_regs
 
-__version__ = '0.0.5'
+__version__ = "1.0.0"
 
 
 # These values encode our desired pin function: IO, ADC, PWM
@@ -186,7 +186,7 @@ class _IO:
         if not skip_chip_id_check:
             chip_id = self.get_chip_id()
             if chip_id != self._chip_id:
-                raise RuntimeError("Chip ID invalid: {:04x} expected: {:04x}.".format(chip_id, self._chip_id))
+                raise RuntimeError(f"Chip ID invalid: {chip_id:04x} expected: {self._chip_id:04x}.")
 
         # Reset the chip if requested, to put it into a known state
         if perform_reset:
@@ -240,8 +240,8 @@ class _IO:
 
     def i2c_write16(self, reg_l, reg_h, value):
         """Write two (8+8bit) registers to the device, as a single write if they are consecutive."""
-        val_l = value & 0xff
-        val_h = (value >> 8) & 0xff
+        val_l = value & 0xFF
+        val_h = (value >> 8) & 0xFF
         if reg_h == reg_l + 1:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l, val_l, val_h])
             self._i2c_dev.i2c_rdwr(msg_w)
@@ -253,7 +253,7 @@ class _IO:
     def get_pin(self, pin):
         """Get a pin definition from its index."""
         if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
+            raise ValueError(f"Pin should be in range 1-{len(self._pins)}.")
 
         return self._pins[pin - 1]
 
@@ -262,7 +262,7 @@ class _IO:
         io_pin = self.get_pin(pin)
 
         if io_pin.port not in (0, 1):
-            raise ValueError("Pin {} does not support switch counting.".format(pin))
+            raise ValueError(f"Pin {pin} does not support switch counting.")
 
         if mode not in [IN, IN_PU]:
             raise ValueError("Pin mode should be one of IN or IN_PU")
@@ -277,7 +277,7 @@ class _IO:
         io_pin = self.get_pin(pin)
 
         if io_pin.port not in (0, 1):
-            raise ValueError("Pin {} does not support switch counting.".format(pin))
+            raise ValueError(f"Pin {pin} does not support switch counting.")
 
         sw_reg = [self.REG_SWITCH_P00, self.REG_SWITCH_P10][io_pin.port] + io_pin.pin
 
@@ -285,14 +285,14 @@ class _IO:
 
         # The switch counter is 7-bit
         # The most significant bit encodes the current GPIO state
-        return value & 0x7f, value & 0x80 == 0x80
+        return value & 0x7F, value & 0x80 == 0x80
 
     def clear_switch_counter(self, pin):
         """Clear the switch count value on a pin to 0."""
         io_pin = self.get_pin(pin)
 
         if io_pin.port not in (0, 1):
-            raise ValueError("Pin {} does not support switch counting.".format(pin))
+            raise ValueError(f"Pin {pin} does not support switch counting.")
 
         sw_reg = [self.REG_SWITCH_P00, self.REG_SWITCH_P10][io_pin.port] + io_pin.pin
 
@@ -307,15 +307,15 @@ class _IO:
         enc_channel_a = self.get_pin(pin_a).enc_channel
         enc_channel_b = self.get_pin(pin_b).enc_channel
         if enc_channel_a is None:
-            raise ValueError("Pin {} does not support an encoder.".format(pin_a))
+            raise ValueError(f"Pin {pin_a} does not support an encoder.")
         if enc_channel_b is None:
-            raise ValueError("Pin {} does not support an encoder.".format(pin_b))
+            raise ValueError(f"Pin {pin_b} does not support an encoder.")
 
         self.set_mode(pin_a, PIN_MODE_PU, schmitt_trigger=True)
         self.set_mode(pin_b, PIN_MODE_PU, schmitt_trigger=True)
         if pin_c is not None:
             if pin_c < 1 or pin_c > len(self._pins):
-                raise ValueError("Pin C should be in range 1-{}, or None.".format(len(self._pins)))
+                raise ValueError(f"Pin C should be in range 1-{len(self._pins)}, or None.")
             self.set_mode(pin_c, PIN_MODE_OD)
             self.output(pin_c, 0)
 
@@ -480,12 +480,12 @@ class _IO:
 
     def get_pwm_module(self, pin):
         if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
+            raise ValueError(f"Pin should be in range 1-{len(self._pins)}.")
 
         io_pin = self._pins[pin - 1]
         if PIN_MODE_PWM not in io_pin.type:
             io_mode = (PIN_MODE_PWM >> 2) & 0b11
-            raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[io_mode]))
+            raise ValueError(f"Pin {pin} does not support {MODE_NAMES[io_mode]}!")
 
         if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
             if io_pin.is_using_alt():
@@ -538,7 +538,7 @@ class _IO:
                 128: 0b111,
             }[divider]
         except KeyError:
-            raise ValueError("A clock divider of {}".format(divider))
+            raise ValueError(f"A clock divider of {divider}")
 
         # TODO: This currently sets GP, PWMTYP and FBINEN to 0
         # It might be desirable to make these available to the user
@@ -608,17 +608,12 @@ class _IO:
         initial_state = mode >> 4
 
         if io_mode != PIN_MODE_IO and mode not in io_pin.type:
-            raise ValueError("Pin {} does not support {}!".format(pin, MODE_NAMES[io_mode]))
+            raise ValueError("Pin {pin} does not support {MODE_NAMES[io_mode]}!")
 
         io_pin.mode = mode
         if self._debug:
             print(
-                "Setting pin {pin} to mode {mode} {name}, state: {state}".format(
-                    pin=pin,
-                    mode=MODE_NAMES[io_mode],
-                    name=GPIO_NAMES[gpio_mode],
-                    state=STATE_NAMES[initial_state],
-                )
+               f"Setting pin {pin} to mode {MODE_NAMES[io_mode]} {GPIO_NAMES[gpio_mode]}, state: {STATE_NAMES[initial_state]}"
             )
 
         if mode == PIN_MODE_PWM:
@@ -681,7 +676,7 @@ class _IO:
 
         if io_pin.mode == PIN_MODE_ADC:
             if self._debug:
-                print("Reading ADC from pin {}".format(pin))
+                print(f"Reading ADC from pin {pin}")
 
             if io_pin.adc_channel > 8:
                 self.i2c_write8(self.REG_AINDIDS1, 1 << (io_pin.adc_channel - 8))
@@ -689,7 +684,7 @@ class _IO:
                 self.i2c_write8(self.REG_AINDIDS0, 1 << io_pin.adc_channel)
 
             con0value = self.i2c_read8(self.REG_ADCCON0)
-            con0value = con0value & ~0x0f
+            con0value = con0value & ~0x0F
             con0value = con0value | io_pin.adc_channel
 
             con0value = con0value & ~(1 << 7)   # ADCF - Clear the conversion complete flag
@@ -708,7 +703,7 @@ class _IO:
             return (reading / 4095.0) * self._vref
         else:
             if self._debug:
-                print("Reading IO from pin {}".format(pin))
+                print(f"Reading IO from pin {pin}")
             pv = self.get_bit(self.get_pin_regs(io_pin).p, io_pin.pin)
 
             return HIGH if pv else LOW
@@ -723,7 +718,7 @@ class _IO:
 
         if io_pin.mode == PIN_MODE_PWM:
             if self._debug:
-                print("Outputting PWM to pin: {pin}".format(pin=pin))
+                print(f"Outputting PWM to pin: {pin}")
 
             if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
                 alt_regs = self.get_alt_pwm_regs(io_pin)
@@ -738,11 +733,11 @@ class _IO:
         else:
             if value == LOW:
                 if self._debug:
-                    print("Outputting LOW to pin: {pin} (or HIGH if inverted)".format(pin=pin))
+                    print(f"Outputting LOW to pin: {pin} (or HIGH if inverted)")
                 self.change_bit(self.get_pin_regs(io_pin).p, io_pin.pin, io_pin.is_inverted())
             elif value == HIGH:
                 if self._debug:
-                    print("Outputting HIGH to pin: {pin} (or LOW if inverted)".format(pin=pin))
+                    print(f"Outputting HIGH to pin: {pin} (or LOW if inverted)")
                 self.change_bit(self.get_pin_regs(io_pin).p, io_pin.pin, not io_pin.is_inverted())
 
     def get_pwm_regs(self, pin):
@@ -774,7 +769,7 @@ class _IO:
 
     def switch_pwm_to_alt(self, pin):
         if pin < 1 or pin > len(self._pins):
-            raise ValueError("Pin should be in range 1-{}.".format(len(self._pins)))
+            raise ValueError(f"Pin should be in range 1-{len(self._pins)}.")
 
         io_pin = self._pins[pin - 1]
 
@@ -993,7 +988,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
                 256: 0b111,  # 1.638s
             }[divider]
         except KeyError:
-            raise ValueError("A clock divider of {}".format(divider))
+            raise ValueError(f"A clock divider of {divider}")
 
         wdt = self.i2c_read8(self.REG_WDCON)
         wdt = wdt & 0b11111000  # Clear the WDPS bits

@@ -22,6 +22,9 @@ endif
 	@echo "deploy:       build and upload to PyPi"
 	@echo "tag:          tag the repository with the current version\n"
 
+version:
+	@hatch version
+
 install:
 	./install.sh --unstable
 
@@ -30,10 +33,13 @@ uninstall:
 
 dev-deps:
 	python3 -m pip install -r requirements-dev.txt
-	sudo apt install dos2unix
+	sudo apt install dos2unix shellcheck
 
 check:
 	@bash check.sh
+
+shellcheck:
+	shellcheck *.sh
 
 qa:
 	tox -e qa
@@ -44,7 +50,7 @@ pytest:
 nopost:
 	@bash check.sh --nopost
 
-tag:
+tag: version
 	git tag -a "v${LIBRARY_VERSION}" -m "Version ${LIBRARY_VERSION}"
 
 build: check
@@ -54,7 +60,7 @@ clean:
 	-rm -r dist
 
 testdeploy: build
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --repository testpypi dist/*
 
 deploy: nopost build
 	twine upload dist/*

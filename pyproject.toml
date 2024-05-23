@@ -100,6 +100,9 @@ skip = """
 [tool.isort]
 line_length = 220
 
+[tool.black]
+line-length = 220
+
 [tool.check-manifest]
 ignore = [
     '.stickler.yml',
@@ -114,7 +117,7 @@ ignore = [
     '.coveragerc'
 ]
 
-[pimoroni]
-apt_packages = ["python3-rpi.gpio", "python3-smbus"]
+[tool.pimoroni]
+apt_packages = []
 configtxt = []
 commands = []
