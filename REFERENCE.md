@@ -17,7 +17,7 @@ The Pimoroni IO Expander is based upon a Nuvoton MS51 and exposes much of the ch
   - [Rotary Encoder Decoding](#rotary-encoder-decoding)
     - [Super IO Changes](#super-io-changes)
   - [Configuring Interrupts](#configuring-interrupts)
-- [Functions Reference](#function-reference)
+- [Function Reference](#function-reference)
 - [Constants Reference](#constants-reference)
   - [Pin Mode Constants](#pin-mode-constants)
   - [State Constants](#state-constants)
@@ -389,13 +389,13 @@ switch_pwm_to_alt(pin)
 Here is the initialiser for the `IOE` class:
 
 ```python
-IOE(i2c_addr=None, interrupt_timeout=1.0, interrupt_pin=None, interrupt_pull_up=False, gpio=None, skip_chip_id_check=False, perform_reset=False)
+IOE(i2c_addr=None, interrupt_timeout=1.0, interrupt_pin=None, interrupt_pull_up=False, gpio=None, smbus_id=1, skip_chip_id_check=False, perform_reset=False)
 ```
 
 Here is the initialise and additional functions for the `SuperIOE` class:
 
 ```python
-SuperIOE(i2c_addr=None, interrupt_timeout=1.0, interrupt_pin=None, interrupt_pull_up=False, gpio=None, skip_chip_id_check=False, perform_reset=False, is_super_io=True)
+SuperIOE(i2c_addr=None, interrupt_timeout=1.0, interrupt_pin=None, interrupt_pull_up=False, gpio=None, smbus_id=1, skip_chip_id_check=False, perform_reset=False, is_super_io=True)
 activate_watchdog()
 deactivate_Watchdog()
 is_watchdog_active()
