@@ -884,6 +884,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         interrupt_pin=None,
         interrupt_pull_up=False,
         gpio=None,
+        smbus_id=1,
         skip_chip_id_check=False,
         perform_reset=False,
         is_super_io=True
@@ -950,7 +951,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
         if i2c_addr is None:
             i2c_addr = self.I2C_ADDR
 
-        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, interrupt_pull_up, gpio, skip_chip_id_check, perform_reset)
+        _IO.__init__(self, i2c_addr, interrupt_timeout, interrupt_pin, interrupt_pull_up, gpio, smbus_id, skip_chip_id_check, perform_reset)
 
         if is_super_io:
             # Mux p1.2 PWM over to PWM 1 Channel 0
