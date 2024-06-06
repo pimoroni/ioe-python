@@ -1,5 +1,10 @@
 # Changelog
 
+1.0.1
+-----
+
+* Fix bug in SuperIOE constructor (add i2c bus number)
+
 1.0.0
 -----
 
