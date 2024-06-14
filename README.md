@@ -16,7 +16,6 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 * Weather HAT: https://shop.pimoroni.com/products/weather-hat-only
 * Inventor HAT Mini: https://shop.pimoroni.com/products/inventor-hat-mini
 
-
 ### Breakouts
 
 * IO Expander Breakout: https://shop.pimoroni.com/products/io-expander
@@ -24,41 +23,47 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 * RGB Encoder Breakout: https://shop.pimoroni.com/products/rgb-encoder-breakout
 * MICS6814 3-in-1 Gas Sensor Breakout: https://shop.pimoroni.com/products/mics6814-gas-sensor-breakout
 
+## Installing
 
-# Getting the Library
+### Full install (recommended):
 
-**Stable library only (no examples) from PyPi:**
+We've created an easy installation script that will install all pre-requisites and get your IO Expander-based breakout
+up and running with minimal efforts. To run it, fire up Terminal which you'll find in Menu -> Accessories -> Terminal
+on your Raspberry Pi desktop, as illustrated below:
 
-* Just run `python3 -m pip install pimoroni-ioexpander`
+![Finding the terminal](http://get.pimoroni.com/resources/github-repo-terminal.png)
 
-In some cases you may need to install pip with: `sudo apt install python3-pip`
+In the new terminal window type the command exactly as it appears below (check for typos) and follow the on-screen instructions:
 
-**Stable library, with latest examples from GitHub:**
+```bash
+git clone https://github.com/pimoroni/ioe-python
+cd ioe-python
+./install.sh
+```
 
-* `git clone https://github.com/pimoroni/ioe-python`
-* `cd ioe-python`
-* `./install.sh`
+**Note** Libraries will be installed in the "pimoroni" virtual environment, you will need to activate it to run examples:
 
-**Latest/development library and examples from GitHub:**
+```
+source ~/.virtualenvs/pimoroni/bin/activate
+```
 
-* `git clone https://github.com/pimoroni/ioe-python`
-* `cd ioe-python`
-* `./install.sh --unstable`
+### Development:
 
+If you want to contribute, or like living on the edge of your seat by having the latest code, you can install the development version like so:
 
-# Configuring your Raspberry Pi
+```bash
+git clone https://github.com/pimoroni/ioe-python
+cd ioe-python
+./install.sh --unstable
+```
 
-## Enable I2C
+The install script should do it for you, but in some cases you might have to enable the i2c bus.
 
-In order to use the IO Expander, you need to enable the I2C interface of your Raspberry Pi. This can be done in the terminal by running:
+On a Raspberry Pi you can do that like so:
 
-* `sudo raspi-config nonint do_i2c 0`
-
-Alternatively, you can enable the I2C interface by:
-* running `sudo raspi-config` and enabling the option under **Interfacing Options**.
-* opening the graphical **Raspberry Pi Configuration** application from the **Preferences** menu.
-
-You may need to reboot after enabling I2C for the change to take effect.
+```
+sudo raspi-config nonint do_i2c 0
+```
 
 ## Note for Raspberry Pi 1
 
@@ -70,7 +75,6 @@ You can change the SMBus that is used by adding `smbus_id=0` to your calls to `i
 There are various examples to get you started with your IO Expander. With the library installed on your Raspberry Pi, these can be found in the `~/Pimoroni/pimoroni-ioexpander/examples` directory.
 
 To take IO Expander further, the full API is described in the [library reference](/REFERENCE.md), with additional feature specific information found in the [docs folder](/docs).
-
 
 # Removing the Library
 
