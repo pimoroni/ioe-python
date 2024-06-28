@@ -25,6 +25,8 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 
 ## Installing
 
+We'd recommend using this library with Raspberry Pi OS Bookworm or later. It requires Python ≥3.7.
+
 ### Full install (recommended):
 
 We've created an easy installation script that will install all pre-requisites and get your IO Expander-based breakout
@@ -57,13 +59,19 @@ cd ioe-python
 ./install.sh --unstable
 ```
 
-The install script should do it for you, but in some cases you might have to enable the i2c bus.
+## Install stable library from PyPi and configure manually
 
-On a Raspberry Pi you can do that like so:
+* Set up a virtual environment: `python3 -m venv --system-site-packages $HOME/.virtualenvs/pimoroni`
+* Switch to the virtual environment: `source ~/.virtualenvs/pimoroni/bin/activate`
+* Install the library: `pip install pimoroni-ioexpander`
 
-```
-sudo raspi-config nonint do_i2c 0
-```
+In some cases you may need to us `sudo` or install pip with: `sudo apt install python3-pip`.
+
+This will not make any configuration changes, so you may also need to enable:
+
+* i2c: `sudo raspi-config nonint do_i2c 0`
+
+You can optionally run `sudo raspi-config` or the graphical Raspberry Pi Configuration UI to enable interfaces.
 
 ## Note for Raspberry Pi 1
 
@@ -80,7 +88,7 @@ To take IO Expander further, the full API is described in the [library reference
 
 To uninstall the library only (keeping all examples):
 
-* Just run `python3 -m pip uninstall pimoroni-ioexpander`
+* Just run `pip uninstall pimoroni-ioexpander`
 
 Or if you have grabbed the library from Github:
 
