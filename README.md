@@ -16,7 +16,6 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 * Weather HAT: https://shop.pimoroni.com/products/weather-hat-only
 * Inventor HAT Mini: https://shop.pimoroni.com/products/inventor-hat-mini
 
-
 ### Breakouts
 
 * IO Expander Breakout: https://shop.pimoroni.com/products/io-expander
@@ -24,41 +23,55 @@ This library is also used to power our other Nuvoton-based boards and breakouts!
 * RGB Encoder Breakout: https://shop.pimoroni.com/products/rgb-encoder-breakout
 * MICS6814 3-in-1 Gas Sensor Breakout: https://shop.pimoroni.com/products/mics6814-gas-sensor-breakout
 
+## Installing
 
-# Getting the Library
+We'd recommend using this library with Raspberry Pi OS Bookworm or later. It requires Python ≥3.7.
 
-**Stable library only (no examples) from PyPi:**
+### Full install (recommended):
 
-* Just run `python3 -m pip install pimoroni-ioexpander`
+We've created an easy installation script that will install all pre-requisites and get your IO Expander-based breakout
+up and running with minimal efforts. To run it, fire up Terminal which you'll find in Menu -> Accessories -> Terminal
+on your Raspberry Pi desktop, as illustrated below:
 
-In some cases you may need to install pip with: `sudo apt install python3-pip`
+![Finding the terminal](http://get.pimoroni.com/resources/github-repo-terminal.png)
 
-**Stable library, with latest examples from GitHub:**
+In the new terminal window type the command exactly as it appears below (check for typos) and follow the on-screen instructions:
 
-* `git clone https://github.com/pimoroni/ioe-python`
-* `cd ioe-python`
-* `./install.sh`
+```bash
+git clone https://github.com/pimoroni/ioe-python
+cd ioe-python
+./install.sh
+```
 
-**Latest/development library and examples from GitHub:**
+**Note** Libraries will be installed in the "pimoroni" virtual environment, you will need to activate it to run examples:
 
-* `git clone https://github.com/pimoroni/ioe-python`
-* `cd ioe-python`
-* `./install.sh --unstable`
+```
+source ~/.virtualenvs/pimoroni/bin/activate
+```
 
+### Development:
 
-# Configuring your Raspberry Pi
+If you want to contribute, or like living on the edge of your seat by having the latest code, you can install the development version like so:
 
-## Enable I2C
+```bash
+git clone https://github.com/pimoroni/ioe-python
+cd ioe-python
+./install.sh --unstable
+```
 
-In order to use the IO Expander, you need to enable the I2C interface of your Raspberry Pi. This can be done in the terminal by running:
+## Install stable library from PyPi and configure manually
 
-* `sudo raspi-config nonint do_i2c 0`
+* Set up a virtual environment: `python3 -m venv --system-site-packages $HOME/.virtualenvs/pimoroni`
+* Switch to the virtual environment: `source ~/.virtualenvs/pimoroni/bin/activate`
+* Install the library: `pip install pimoroni-ioexpander`
 
-Alternatively, you can enable the I2C interface by:
-* running `sudo raspi-config` and enabling the option under **Interfacing Options**.
-* opening the graphical **Raspberry Pi Configuration** application from the **Preferences** menu.
+In some cases you may need to us `sudo` or install pip with: `sudo apt install python3-pip`.
 
-You may need to reboot after enabling I2C for the change to take effect.
+This will not make any configuration changes, so you may also need to enable:
+
+* i2c: `sudo raspi-config nonint do_i2c 0`
+
+You can optionally run `sudo raspi-config` or the graphical Raspberry Pi Configuration UI to enable interfaces.
 
 ## Note for Raspberry Pi 1
 
@@ -71,12 +84,11 @@ There are various examples to get you started with your IO Expander. With the li
 
 To take IO Expander further, the full API is described in the [library reference](/REFERENCE.md), with additional feature specific information found in the [docs folder](/docs).
 
-
 # Removing the Library
 
 To uninstall the library only (keeping all examples):
 
-* Just run `python3 -m pip uninstall pimoroni-ioexpander`
+* Just run `pip uninstall pimoroni-ioexpander`
 
 Or if you have grabbed the library from Github:
 
