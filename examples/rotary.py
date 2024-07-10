@@ -27,7 +27,9 @@ POT_ENC_C = 11
 BRIGHTNESS = 0.5                # Effectively the maximum fraction of the period that the LED will be on
 PERIOD = int(255 / BRIGHTNESS)  # Add a period large enough to get 0-255 steps at the desired brightness
 
-ioe = io.IOE(i2c_addr=I2C_ADDR, interrupt_pin=4)
+ioe = io.IOE(i2c_addr=I2C_ADDR, interrupt_pin=None)
+# If you'd like to use the hardware interrupt pin on your encoder breakout, you can use the following instead:
+# ioe = io.IOE(i2c_addr=I2C_ADDR, interrupt_pin=4)
 
 # Swap the interrupt pin for the Rotary Encoder breakout
 if I2C_ADDR == 0x0F:
