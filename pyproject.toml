@@ -36,7 +36,8 @@ classifiers = [
     "Topic :: System :: Hardware",
 ]
 dependencies = [
-    "smbus2>=0.4.0"
+    "smbus2>=0.4.0",
+    "rpi-lgpio>=0.6 ; platform_machine == 'aarch64' or platform_machine == 'armv7l' or platform_machine == 'armv6l'"
 ]
 
 [tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
