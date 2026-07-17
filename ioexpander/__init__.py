@@ -1,4 +1,6 @@
 import time
+import warnings
+from datetime import timedelta
 
 from smbus2 import SMBus, i2c_msg
 
@@ -178,7 +180,6 @@ class _IO:
         self._adc_enabled = False
         self._timeout = interrupt_timeout
         self._interrupt_pin = interrupt_pin
-        self._gpio = gpio
         self._encoder_offset = [0, 0, 0, 0]
         self._encoder_last = [0, 0, 0, 0]
 
@@ -192,17 +193,30 @@ class _IO:
         if perform_reset:
             self.reset()
 
-        # Set up the interrupt pin on the Pi, and enable the chip's output
+        # Set up the interrupt pin (via libgpiod) and enable the chip's output.
+        # gpiod is imported lazily so non-interrupt users don't need it.
         if self._interrupt_pin is not None:
-            if self._gpio is None:
-                import RPi.GPIO as GPIO
-                self._gpio = GPIO
-            self._gpio.setwarnings(False)
-            self._gpio.setmode(GPIO.BCM)
-            if interrupt_pull_up:
-                self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            else:
-                self._gpio.setup(self._interrupt_pin, GPIO.IN, pull_up_down=GPIO.PUD_OFF)
+            if gpio is not None:
+                warnings.warn(
+                    "The 'gpio' argument is deprecated and ignored; ioexpander now uses "
+                    "gpiodevice/libgpiod for the interrupt pin.",
+                    DeprecationWarning,
+                )
+            import gpiod
+            import gpiodevice
+            from gpiod.line import Bias, Direction, Edge
+
+            self._int_request, self._int_offset = gpiodevice.get_pin(
+                self._interrupt_pin,
+                "ioexpander-int",
+                gpiod.LineSettings(
+                    direction=Direction.INPUT,
+                    edge_detection=Edge.FALLING,
+                    bias=Bias.PULL_UP if interrupt_pull_up else Bias.DISABLED,
+                    debounce_period=timedelta(milliseconds=1),
+                ),
+            )
+            self._watch = None
             self.enable_interrupt_out()
 
     def i2c_read8(self, reg):
@@ -382,7 +396,10 @@ class _IO:
     def get_interrupt(self):
         """Get the IOE interrupt state."""
         if self._interrupt_pin is not None:
-            return self._gpio.input(self._interrupt_pin) == 0
+            from gpiod.line import Value
+
+            # The IOE interrupt output is active-low: asserted == line low == INACTIVE.
+            return self._int_request.get_value(self._int_offset) == Value.INACTIVE
         else:
             return self.get_bit(self.REG_INT, self.BIT_INT_TRIGD)
 
@@ -408,7 +425,12 @@ class _IO:
 
         """
         if self._interrupt_pin is not None:
-            self._gpio.add_event_detect(self._interrupt_pin, self._gpio.FALLING, callback=callback, bouncetime=1)
+            import gpiodevice
+
+            self._watch = gpiodevice.Watch(
+                self._int_request,
+                {self._int_offset: lambda event: callback(self._interrupt_pin)},
+            ).start()
 
     def _wait_for_flash(self):
         """Wait for the IOE to finish writing non-volatile memory."""
