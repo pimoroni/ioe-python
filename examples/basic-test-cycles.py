@@ -22,7 +22,7 @@ def test_cycles():
         ioe.output(4, out_value)
         out_value = not out_value
 
-        print("3: {a} 14: {b}".format(a=a, b=b))
+        print(f"3: {a} 14: {b}")
 
         time.sleep(1.0)
 

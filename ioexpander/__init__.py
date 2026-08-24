@@ -204,7 +204,7 @@ class _IO:
                 warnings.warn(
                     "The 'gpio' argument is deprecated and ignored; ioexpander now uses "
                     "gpiodevice/libgpiod for the interrupt pin.",
-                    DeprecationWarning,
+                    DeprecationWarning, stacklevel=2,
                 )
             import gpiod
             import gpiodevice
@@ -229,7 +229,7 @@ class _IO:
         msg_r = i2c_msg.read(self._i2c_addr, 1)
         self._i2c_dev.i2c_rdwr(msg_w, msg_r)
 
-        return list(msg_r)[0]
+        return next(iter(msg_r))
 
     def i2c_read12(self, reg_l, reg_h):
         """Read two (4+8bit) registers from the device, as a single read if they are consecutive."""
@@ -237,7 +237,7 @@ class _IO:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
             self._i2c_dev.i2c_rdwr(msg_w, msg_r)
-            return list(msg_r)[0] | (list(msg_r)[1] << 4)
+            return next(iter(msg_r)) | (list(msg_r)[1] << 4)
         else:
             return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
 
@@ -247,7 +247,7 @@ class _IO:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
             self._i2c_dev.i2c_rdwr(msg_w, msg_r)
-            return list(msg_r)[0] | (list(msg_r)[1] << 8)
+            return next(iter(msg_r)) | (list(msg_r)[1] << 8)
         else:
             return self.i2c_read8(reg_l) | (self.i2c_read8(reg_h) << 8)
 
@@ -514,8 +514,7 @@ class _IO:
             raise ValueError(f"Pin {pin} does not support {MODE_NAMES[io_mode]}!")
 
         if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
-            if io_pin.is_using_alt():
-                return io_pin.pwm_alt_module
+            return io_pin.pwm_alt_module
         return io_pin.pwm_module
 
     def pwm_load(self, pwm_module=0, wait_for_load=True):
@@ -564,7 +563,7 @@ class _IO:
                 128: 0b111,
             }[divider]
         except KeyError:
-            raise ValueError(f"A clock divider of {divider}")
+            raise ValueError(f"A clock divider of {divider}") from None
 
         # TODO: This currently sets GP, PWMTYP and FBINEN to 0
         # It might be desirable to make these available to the user
@@ -1015,7 +1014,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
                 256: 0b111,  # 1.638s
             }[divider]
         except KeyError:
-            raise ValueError(f"A clock divider of {divider}")
+            raise ValueError(f"A clock divider of {divider}") from None
 
         wdt = self.i2c_read8(self.REG_WDCON)
         wdt = wdt & 0b11111000  # Clear the WDPS bits

@@ -7,7 +7,7 @@ FAST_DECAY = 0  # aka 'Coasting'
 SLOW_DECAY = 1  # aka 'Braking'
 
 
-class MotorState():
+class MotorState:
     DEFAULT_SPEED_SCALE = 1.0  # The standard motor speed scale
     DEFAULT_ZEROPOINT = 0.0  # The standard motor zeropoint
     DEFAULT_DEADZONE = 0.05  # The standard motor deadzone
@@ -154,7 +154,7 @@ class MotorState():
         return duty
 
 
-class Motor():
+class Motor:
 
     def __apply_duty(self, duty, mode, load, wait_for_load):
         if duty is not None:

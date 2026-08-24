@@ -6,7 +6,7 @@ import ioexpander as io
 ioe = io.IOE(i2c_addr=0x19)
 chip_id = ioe.get_chip_id()
 
-print("Chip ID: {:04x}".format(chip_id))
+print(f"Chip ID: {chip_id:04x}")
 
 ioe.set_pwm_period(255)
 ioe.set_mode(3, io.PWM)   # P1.2 LED Red

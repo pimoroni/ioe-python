@@ -10,7 +10,7 @@ LINEAR = 1
 CONTINUOUS = 2
 
 
-class Calibration():
+class Calibration:
     DEFAULT_MIN_PULSE = 500.0   # in microseconds
     DEFAULT_MID_PULSE = 1500.0  # in microseconds
     DEFAULT_MAX_PULSE = 2500.0  # in microseconds
@@ -70,7 +70,7 @@ class Calibration():
         self.apply_blank_pairs(size)
         if size > 0:
             size_minus_one = size - 1
-            for i in range(0, size):
+            for i in range(size):
                 pulse = map_float(i, 0.0, size_minus_one, min_pulse, max_pulse)
                 value = map_float(i, 0.0, size_minus_one, min_value, max_value)
                 self.calibration[i] = Pair(pulse, value)
@@ -258,7 +258,7 @@ class Calibration():
         return None
 
 
-class ServoState():
+class ServoState:
     DEFAULT_FREQUENCY = 50.0    # The standard servo update rate
     MIN_FREQUENCY = 10.0        # Lowest achievable with hardware PWM with good resolution
     MAX_FREQUENCY = 350.0       # Highest nice value that still allows the full uS pulse range
@@ -381,7 +381,7 @@ class ServoState():
         return level
 
 
-class Servo():
+class Servo:
     def __apply_pulse(self, pulse, load, wait_for_load):
         self.ioe.output(self.pin, ServoState.pulse_to_level(pulse, self.pwm_period, self.pwm_frequency), load, wait_for_load)
 
