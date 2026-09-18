@@ -1,10 +1,14 @@
 import time
+from importlib.metadata import PackageNotFoundError, version
 
 from smbus2 import SMBus, i2c_msg
 
 from . import ioe_regs, sioe_regs
 
-__version__ = "1.0.1"
+try:
+    __version__ = version("ioexpander")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 
 # These values encode our desired pin function: IO, ADC, PWM
@@ -211,7 +215,7 @@ class _IO:
         msg_r = i2c_msg.read(self._i2c_addr, 1)
         self._i2c_dev.i2c_rdwr(msg_w, msg_r)
 
-        return list(msg_r)[0]
+        return next(iter(msg_r))
 
     def i2c_read12(self, reg_l, reg_h):
         """Read two (4+8bit) registers from the device, as a single read if they are consecutive."""
@@ -219,7 +223,7 @@ class _IO:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
             self._i2c_dev.i2c_rdwr(msg_w, msg_r)
-            return list(msg_r)[0] | (list(msg_r)[1] << 4)
+            return next(iter(msg_r)) | (list(msg_r)[1] << 4)
         else:
             return (self.i2c_read8(reg_h) << 4) | self.i2c_read8(reg_l)
 
@@ -229,7 +233,7 @@ class _IO:
             msg_w = i2c_msg.write(self._i2c_addr, [reg_l])
             msg_r = i2c_msg.read(self._i2c_addr, 2)
             self._i2c_dev.i2c_rdwr(msg_w, msg_r)
-            return list(msg_r)[0] | (list(msg_r)[1] << 8)
+            return next(iter(msg_r)) | (list(msg_r)[1] << 8)
         else:
             return self.i2c_read8(reg_l) | (self.i2c_read8(reg_h) << 8)
 
@@ -487,9 +491,8 @@ class _IO:
             io_mode = (PIN_MODE_PWM >> 2) & 0b11
             raise ValueError(f"Pin {pin} does not support {MODE_NAMES[io_mode]}!")
 
-        if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt():
-            if io_pin.is_using_alt():
-                return io_pin.pwm_alt_module
+        if isinstance(io_pin, DUAL_PWM_PIN) and io_pin.is_using_alt() and io_pin.is_using_alt():
+            return io_pin.pwm_alt_module
         return io_pin.pwm_module
 
     def pwm_load(self, pwm_module=0, wait_for_load=True):
@@ -538,7 +541,7 @@ class _IO:
                 128: 0b111,
             }[divider]
         except KeyError:
-            raise ValueError(f"A clock divider of {divider}")
+            raise ValueError(f"A clock divider of {divider}") from None
 
         # TODO: This currently sets GP, PWMTYP and FBINEN to 0
         # It might be desirable to make these available to the user
@@ -989,7 +992,7 @@ class SuperIOE(_IO, sioe_regs.REGS):
                 256: 0b111,  # 1.638s
             }[divider]
         except KeyError:
-            raise ValueError(f"A clock divider of {divider}")
+            raise ValueError(f"A clock divider of {divider}") from None
 
         wdt = self.i2c_read8(self.REG_WDCON)
         wdt = wdt & 0b11111000  # Clear the WDPS bits

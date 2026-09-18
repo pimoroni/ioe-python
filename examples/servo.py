@@ -35,8 +35,8 @@ while True:
 
     duty_per_microsecond = PERIOD / (20 * 1000)  # Default is 3 LSB per microsecond
 
-    duty_cycle = int(round(servo_us * duty_per_microsecond))
-    print("Pulse {:.2f}us, Duty Cycle: {}".format(servo_us, duty_cycle))
+    duty_cycle = round(servo_us * duty_per_microsecond)
+    print(f"Pulse {servo_us:.2f}us, Duty Cycle: {duty_cycle}")
 
     ioe.output(PIN_PWM, duty_cycle)
 

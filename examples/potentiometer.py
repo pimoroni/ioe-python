@@ -43,7 +43,7 @@ ioe.set_mode(PIN_RED, io.PWM, invert=True)
 ioe.set_mode(PIN_GREEN, io.PWM, invert=True)
 ioe.set_mode(PIN_BLUE, io.PWM, invert=True)
 
-print("Running LED with {} brightness steps.".format(int(PERIOD * BRIGHTNESS)))
+print(f"Running LED with {int(PERIOD * BRIGHTNESS)} brightness steps.")
 
 while True:
     analog = ioe.input(POT_ENC_C)

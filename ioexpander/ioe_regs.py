@@ -1,3 +1,6 @@
+from typing import ClassVar
+
+
 class REGS:
     I2C_ADDR = 0x18
     CHIP_ID = 0xE26A
@@ -180,8 +183,6 @@ class REGS:
     REG_EIP1 = 0xBE     # Read only
     REG_EIPH1 = 0xBF    # Read only
 
-    REG_USER_FLASH = 0xD0
-    REG_FLASH_PAGE = 0xF0
 
     REG_INT = 0xF9
     MASK_INT_TRIG = 0x1
@@ -194,7 +195,6 @@ class REGS:
     REG_INT_MASK_P1 = 0x01
     REG_INT_MASK_P3 = 0x03
 
-    REG_VERSION = 0xFC
     REG_ADDR = 0xFD
 
     REG_CTRL = 0xFE     # 0 = Sleep, 1 = Reset, 2 = Read Flash, 3 = Write Flash, 4 = Addr Unlock
@@ -206,4 +206,4 @@ class REGS:
 
     # Special mode registers, use a bit-addressing scheme to avoid
     # writing the *whole* port and smashing the i2c pins
-    BIT_ADDRESSED_REGS = [REG_P0, REG_P1, REG_P2, REG_P3]
+    BIT_ADDRESSED_REGS: ClassVar[list[int]] = [REG_P0, REG_P1, REG_P2, REG_P3]

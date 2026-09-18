@@ -24,10 +24,7 @@ class PID:
     def calculate(self, value, value_change=None):
         error = self.setpoint - value
         self._error_sum += error * self._sample_rate
-        if value_change is None:
-            rate_error = (value - self._last_value) / self._sample_rate
-        else:
-            rate_error = value_change
+        rate_error = (value - self._last_value) / self._sample_rate if value_change is None else value_change
         self._last_value = value
 
         return (error * self.kp) + (self._error_sum * self.ki) - (rate_error * self.kd)

@@ -27,7 +27,7 @@ while True:
     adc = round(adc, 2)
 
     if adc != last_adc:
-        print("{:.2f}v".format(adc))
+        print(f"{adc:.2f}v")
         last_adc = adc
 
     time.sleep(1.0 / 30)
