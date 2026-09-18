@@ -24,7 +24,7 @@ Capture = namedtuple("Capture", ["count",
                                  "radians_per_second"])
 
 
-class Encoder():
+class Encoder:
     def __init__(self, ioe, channel, pins, common_pin=None, direction=NORMAL_DIR, counts_per_rev=ROTARY_CPR, count_microsteps=False, count_divider=1):
         self.ioe = ioe
         self.channel = channel

@@ -17,7 +17,7 @@ for pin in ADC_PINS:
     ioe.set_mode(pin, io.ADC)
 
 while True:
-    print("")
+    print()
     print("ADC Readings:")
     for pin in ADC_PINS:
         value = ioe.input(pin)

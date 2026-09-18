@@ -30,7 +30,7 @@ ioe.set_mode(PIN_RED, io.PWM)
 ioe.set_mode(PIN_GREEN, io.PWM)
 ioe.set_mode(PIN_BLUE, io.PWM)
 
-print("Running LED with {} brightness steps.".format(int(PERIOD * BRIGHTNESS)))
+print(f"Running LED with {int(PERIOD * BRIGHTNESS)} brightness steps.")
 
 while True:
     h = time.time() / 10.0
