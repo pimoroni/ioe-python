@@ -1,5 +1,13 @@
 # Changelog
 
+2.0.0
+-----
+
+* Enhancement: Repackage to the uv/hatchling method, with PyPI trusted publishing
+* Enhancement: Version is derived from the git tag, __version__ from package metadata
+* Enhancement: Declare the rpi-lgpio stop-gap dependency for Pi 5
+* Python 3.9 or later, 3.7 and 3.8 support dropped
+
 1.0.1
 -----
 
